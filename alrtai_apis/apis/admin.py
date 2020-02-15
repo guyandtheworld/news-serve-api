@@ -1,8 +1,9 @@
 from django.contrib import admin
-from . import models
+from .models.scenario import Scenario
+from .models.users import User, Client, UserScenario
 
-admin.site.register(models.Client)
-admin.site.register(models.Scenario)
-admin.site.register(models.User)
-admin.site.register(models.UserScenario)
+admin.site.register(Client)
+admin.site.register(Scenario)
+admin.site.register(User)
+admin.site.register(UserScenario)
 
