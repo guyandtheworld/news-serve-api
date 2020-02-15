@@ -4,4 +4,5 @@ from . import models
 admin.site.register(models.Client)
 admin.site.register(models.Scenario)
 admin.site.register(models.User)
+admin.site.register(models.UserScenario)
 
