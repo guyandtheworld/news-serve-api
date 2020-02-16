@@ -14,11 +14,6 @@ from .models.scenario import (
 from .models.users import User, Client, UserScenario
 
 
-class Test(views.APIView):
-    def get(self, request):
-        return Response("TEST")
-
-
 class GenericGET(views.APIView):
     def get(self, request):
         return Response("Send POST request with JSON object with the correct key")
