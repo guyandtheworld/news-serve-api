@@ -4,5 +4,5 @@ from . import views
 
 urlpatterns = [
     path("", views.Test.as_view(), name="index"),
-    path("getuuid", views.GetUUID.as_view()),
+    path("getuuid", views.GetUserUUID.as_view()),
 ]

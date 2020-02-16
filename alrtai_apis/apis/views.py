@@ -19,7 +19,7 @@ class Test(views.APIView):
         return Response("TEST")
 
 
-class GetUUID(views.APIView):
+class GetUserUUID(views.APIView):
     def get(self, request):
         return Response("Send POST request with JSON object with email as a key")
 
