@@ -18,29 +18,31 @@ class Test(views.APIView):
         return Response("TEST")
 
 
-class GetUserUUID(views.APIView):
+class GenericGET(views.APIView):
     def get(self, request):
         return Response("Send POST request with JSON object with email as a key")
 
+    def getSingleObjectFromPOST(self, request, key, column):
+        if key in request.data:
+            data = request.data[key]
+            obj = User.objects.filter(**{column: data}).first()
+            if obj == None:
+                return False
+            return obj
+        return False
+
+
+class GetUserUUID(GenericGET):
     def post(self, request):
-        if "email" in request.data:
-            email = request.data["email"]
-            user_uuid = User.objects.filter(email=email).first()
-            if user_uuid == None:
-                return Response({"success": False})
-            return Response({"success": True, "uuid": user_uuid.uuid})
-        return Response("Invalid object in request")
+        data = self.getSingleObjectFromPOST(request, "email", "email")
+        if data:
+            return Response({"success": True, "uuid": data.uuid})
+        return Response({"success": False})
 
 
-class GetClientUUID(views.APIView):
-    def get(self, request):
-        return Response("Send POST request with JSON object with uuid as a key")
-
+class GetClientUUID(GenericGET):
     def post(self, request):
-        if "uuid" in request.data:
-            uuid = request.data["uuid"]
-            user = User.objects.filter(uuid=uuid).first()
-            if user == None:
-                return Response({"success": False})
-            return Response({"success": True, "uuid": user.clientID.uuid})
-        return Response("Invalid object in request")
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid")
+        if data:
+            return Response({"success": True, "uuid": data.clientID.uuid})
+        return Response({"success": False})
