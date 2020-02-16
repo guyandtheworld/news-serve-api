@@ -103,3 +103,13 @@ class GetBuckets(GenericGET):
                 {"success": True, "result": serializers.serialize("json", data)}
             )
         return Response({"success": False})
+
+
+class GetBucketWeights(GenericGET):
+    def post(self, request):
+        data = self.getManyObjectsFromPOST(request, "uuid", "userID", BucketWeight)
+        if data:
+            return Response(
+                {"success": True, "result": serializers.serialize("json", data)}
+            )
+        return Response({"success": False})

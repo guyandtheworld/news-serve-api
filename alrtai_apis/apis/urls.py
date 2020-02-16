@@ -11,4 +11,5 @@ urlpatterns = [
     path("getuserdefaultscenario", views.GetUserDefaultScenario.as_view()),
     path("getscenarioname", views.GetScenarioName.as_view()),
     path("getbuckets", views.GetBuckets.as_view()),
+    path("getbucketweights", views.GetBucketWeights.as_view()),
 ]
