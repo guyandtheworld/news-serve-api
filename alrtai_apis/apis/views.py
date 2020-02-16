@@ -32,6 +32,15 @@ class GenericGET(views.APIView):
             return obj
         return False
 
+    def getManyObjectsFromPOST(self, request, key, column, ModelName):
+        if key in request.data:
+            data = request.data[key]
+            obj = ModelName.objects.filter(**{column: data})
+            if obj == None:
+                return False
+            return obj
+        return False
+
 
 class GetUserUUID(GenericGET):
     def post(self, request):
@@ -82,5 +91,15 @@ class GetScenarioName(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", Scenario)
         if data:
-            return Response({"success": True, "status": data.name})
+            return Response({"success": True, "name": data.name})
+        return Response({"success": False})
+
+
+class GetBuckets(GenericGET):
+    def post(self, request):
+        data = self.getManyObjectsFromPOST(request, "uuid", "scenarioID", Bucket)
+        if data:
+            return Response(
+                {"success": True, "result": serializers.serialize("json", data)}
+            )
         return Response({"success": False})

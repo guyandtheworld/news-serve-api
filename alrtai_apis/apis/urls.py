@@ -10,4 +10,5 @@ urlpatterns = [
     path("getuserstatus", views.GetClientName.as_view()),
     path("getuserdefaultscenario", views.GetUserDefaultScenario.as_view()),
     path("getscenarioname", views.GetScenarioName.as_view()),
+    path("getbuckets", views.GetBuckets.as_view()),
 ]
