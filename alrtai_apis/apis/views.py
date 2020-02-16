@@ -20,7 +20,7 @@ class Test(views.APIView):
 
 class GenericGET(views.APIView):
     def get(self, request):
-        return Response("Send POST request with JSON object with email as a key")
+        return Response("Send POST request with JSON object with the correct key")
 
     def getSingleObjectFromPOST(self, request, key, column, ModelName):
         if key in request.data:
@@ -53,4 +53,12 @@ class GetClientName(GenericGET):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", Client)
         if data:
             return Response({"success": True, "name": data.name})
+        return Response({"success": False})
+
+
+class GetUserStatus(GenericGET):
+    def post(self, request):
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
+        if data:
+            return Response({"success": True, "status": data.status})
         return Response({"success": False})
