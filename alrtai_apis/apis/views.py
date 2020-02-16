@@ -29,3 +29,15 @@ class GetUserUUID(views.APIView):
         if user_uuid == None:
             return Response({"success": False})
         return Response({"success": True, "uuid": user_uuid.uuid})
+
+
+class GetClientUUID(views.APIView):
+    def get(self, request):
+        return Response("Send POST request with JSON object with uuid as a key")
+
+    def post(self, request):
+        uuid = request.data["uuid"]
+        user = User.objects.filter(uuid=uuid).first()
+        if user == None:
+            return Response({"success": False})
+        return Response({"success": True, "uuid": user.clientID.uuid})
