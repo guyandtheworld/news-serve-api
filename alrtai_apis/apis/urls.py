@@ -9,4 +9,5 @@ urlpatterns = [
     path("getclientname", views.GetClientName.as_view()),
     path("getuserstatus", views.GetClientName.as_view()),
     path("getuserdefaultscenario", views.GetUserDefaultScenario.as_view()),
+    path("getscenarioname", views.GetScenarioName.as_view()),
 ]

@@ -76,3 +76,11 @@ class GetUserDefaultScenario(GenericGET):
                 }
             )
         return Response({"success": False})
+
+
+class GetScenarioName(GenericGET):
+    def post(self, request):
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", Scenario)
+        if data:
+            return Response({"success": True, "status": data.name})
+        return Response({"success": False})
