@@ -1,5 +1,6 @@
 import json
 from django.shortcuts import render
+from django.core import serializers
 from rest_framework import views
 from rest_framework.response import Response
 from .models.scenario import (
@@ -61,4 +62,17 @@ class GetUserStatus(GenericGET):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
         if data:
             return Response({"success": True, "status": data.status})
+        return Response({"success": False})
+
+
+class GetUserDefaultScenario(GenericGET):
+    def post(self, request):
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
+        if data:
+            return Response(
+                {
+                    "success": True,
+                    "result": serializers.serialize("json", [data.defaultScenario]),
+                }
+            )
         return Response({"success": False})
