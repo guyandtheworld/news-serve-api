@@ -7,7 +7,7 @@ from .models.scenario import (
     Scenario,
     Bucket,
     BucketWeight,
-    ModelDetails,
+    ModelDetail,
     BucketModel,
     Source,
 )
