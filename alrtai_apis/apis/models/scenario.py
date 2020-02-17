@@ -23,7 +23,7 @@ class BucketWeight(models.Model):
     weight = models.FloatField()
 
 
-class ModelDetails(models.Model):
+class ModelDetail(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     version = models.SmallIntegerField()
@@ -32,7 +32,7 @@ class ModelDetails(models.Model):
 class BucketModel(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
-    modelID = models.ForeignKey("ModelDetails", on_delete=models.CASCADE)
+    modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
 
 
 class Source(models.Model):

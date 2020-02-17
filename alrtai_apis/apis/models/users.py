@@ -24,3 +24,10 @@ class UserScenario(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     userID = models.ForeignKey("User", on_delete=models.CASCADE)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
+
+
+class Portfolio(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    userID = models.ForeignKey("User", on_delete=models.CASCADE)
+    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
+    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
