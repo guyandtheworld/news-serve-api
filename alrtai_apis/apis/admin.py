@@ -18,7 +18,7 @@ from .models.users import (
 from .models.entity import (
     Entity,
     Alias,
-    LastScraped,
+    LastScrape,
     ScrapeSource,
 )
 
@@ -40,7 +40,7 @@ admin.site.register(Source)
 admin.site.register(Portfolio)
 admin.site.register(Entity)
 admin.site.register(Alias)
-admin.site.register(LastScraped)
+admin.site.register(LastScrape)
 admin.site.register(ScrapeSource)
 admin.site.register(BucketScore)
 admin.site.register(EntityScore)

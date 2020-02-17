@@ -22,7 +22,7 @@ class Alias(models.Model):
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
 
 
-class LastScraped(models.Model):
+class LastScrape(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
     scrapeSourceID = models.ForeignKey("ScrapeSource", on_delete=models.CASCADE)
