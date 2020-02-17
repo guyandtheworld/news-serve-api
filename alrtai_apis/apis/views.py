@@ -19,8 +19,9 @@ class GenericGET(views.APIView):
         return Response("Send POST request with JSON object with the correct key")
 
     def getSingleObjectFromPOST(self, request, key, column, ModelName):
-        if key in request.data:
-            data = request.data[key]
+        json_data = json.loads(request.body.decode("utf-8"))
+        if key in json_data:
+            data = json_data[key]
             obj = ModelName.objects.filter(**{column: data}).first()
             if obj == None:
                 return False
