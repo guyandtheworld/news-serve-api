@@ -25,6 +25,8 @@ class Story(models.Model):
     # title_analytics
     # body_analytics
 
+    def __str__(self):
+        return self.title
 
 class BucketScore(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -35,6 +37,8 @@ class BucketScore(models.Model):
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
     grossScore = models.FloatField()
+    def __str__(self):
+        return self.storyID + self.bucketID
 
 
 class EntityScore(models.Model):
@@ -46,3 +50,5 @@ class EntityScore(models.Model):
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
     grossScore = models.FloatField()
+    def __str__(self):
+        return self.storyID + self.bucketID

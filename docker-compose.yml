@@ -8,3 +8,5 @@ services:
       dockerfile: dockerfile.dev
     ports:
       - "8000:8000"
+    env_file:
+      - .keys/django.env

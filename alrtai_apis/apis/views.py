@@ -61,9 +61,9 @@ class GetClientUUID(GenericGET):
 
 class GetClientName(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", Client)
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
         if data:
-            return Response({"success": True, "name": data.name})
+            return Response({"success": True, "name": data.clientID.name})
         return Response({"success": False})
 
 
@@ -90,7 +90,7 @@ class GetUserDefaultScenario(GenericGET):
 
 class GetScenarioName(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", Scenario)
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User.defaultScenario.name)
         if data:
             return Response({"success": True, "name": data.name})
         return Response({"success": False})
