@@ -8,6 +8,7 @@ STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"))
 class Entity(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
+    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     lei = models.CharField(max_length=100, blank=True)
     dbpediaResource = models.CharField(max_length=100, blank=True)
     wikiResource = models.CharField(max_length=100, blank=True)
@@ -16,6 +17,7 @@ class Entity(models.Model):
     manualEntry = models.BooleanField(default=False)
     def __str__(self):
         return self.name
+
 
 class Alias(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -31,7 +33,8 @@ class LastScrape(models.Model):
     scrapeSourceID = models.ForeignKey("ScrapeSource", on_delete=models.CASCADE)
     lastScraped = models.DateTimeField()
     def __str__(self):
-        return self.entityID
+        return "{} - {} - {}".format(self.entityID.name, \
+                                     self.scrapeSourceID.name, str(self.lastScraped))
 
 
 class ScrapeSource(models.Model):
