@@ -23,6 +23,7 @@ from .models.entity import (
 )
 
 from .models.story import (
+    Story,
     BucketScore,
     EntityScore,
 )
@@ -42,5 +43,6 @@ admin.site.register(Entity)
 admin.site.register(Alias)
 admin.site.register(LastScrape)
 admin.site.register(ScrapeSource)
+admin.site.register(Story)
 admin.site.register(BucketScore)
 admin.site.register(EntityScore)
