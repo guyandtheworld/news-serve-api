@@ -11,9 +11,9 @@ class Story(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
-    title = models.CharField(max_length=1000)
+    title = models.CharField(max_length=2000)
     unique_hash = models.CharField(max_length=100)
-    url = models.CharField(max_length=200)
+    url = models.CharField(max_length=1000)
     search_keyword = models.CharField(max_length=200)
     published_date = models.DateTimeField()
     internal_source = models.CharField(max_length=100)
