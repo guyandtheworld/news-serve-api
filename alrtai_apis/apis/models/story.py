@@ -22,12 +22,6 @@ class Story(models.Model):
     source_country = models.CharField(max_length=100)
     raw_file_source = models.CharField(max_length=1000)
     entry_created = models.DateTimeField(default=timezone.now)
-    description = models.CharField(max_length=1000, blank=True,
-                                   null=True)
-    status_code = models.IntegerField(blank=True, null=True)
-    body = models.CharField(max_length=10000, blank=True, null=True)
-    title_analytics = JSONField(default=dict, null=True)
-    body_analytics = JSONField(default=dict, null=True)
 
     def __str__(self):
         return "{} - {}".format(self.entityID.name, self.title)
@@ -36,11 +30,56 @@ class Story(models.Model):
         verbose_name_plural = "stories"
 
 
+class StoryBody(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
+    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    body = models.CharField(max_length=10000, blank=True, null=True)
+    status_code = models.IntegerField(blank=True, null=True)
+    entryTime = models.DateTimeField()
+
+    def __str__(self):
+        return "{}".format(self.storyID.title)
+
+    class Meta:
+        verbose_name_plural = "story bodies"
+
+
+class StoryEntities(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
+    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    is_headline = models.BooleanField()
+    entities = JSONField()
+    entryTime = models.DateTimeField()
+
+    def __str__(self):
+        return "{}".format(self.storyID.title)
+
+    class Meta:
+        verbose_name_plural = "story entities"
+
+
+class StorySentiment(models.Model):
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
+                            editable=False)
+    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    is_headline = models.BooleanField()
+    sentiment = JSONField()
+    entryTime = models.DateTimeField()
+
+    def __str__(self):
+        return "{}".format(self.storyID.title)
+
+    class Meta:
+        verbose_name_plural = "story sentiment"
+
+
 class BucketScore(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
-    storyDate = models.DateTimeField()
+    entryTime = models.DateTimeField()
     sourceID = models.ForeignKey("Source", on_delete=models.CASCADE)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
@@ -54,6 +93,7 @@ class EntityScore(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    entryTime = models.DateTimeField()
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
     sourceID = models.ForeignKey("Source", on_delete=models.CASCADE)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
