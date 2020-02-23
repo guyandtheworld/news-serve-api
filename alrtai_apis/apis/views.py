@@ -1,6 +1,7 @@
 import json
 from django.shortcuts import render
 from django.core import serializers
+from rest_framework.generics import CreateAPIView
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
@@ -14,7 +15,8 @@ from .models.scenario import (
     Source,
 )
 from .models.users import User, Client, UserScenario
-
+from .models.entity import Entity
+from .seralizers import EntitySerializer, AliasSerializer
 
 class GenericGET(views.APIView):
     authentication_classes = [TokenAuthentication]
@@ -114,3 +116,9 @@ class GetBucketWeights(GenericGET):
                 {"success": True, "result": serializers.serialize("json", data)}
             )
         return Response({"success": False})
+
+class AddEntity(CreateAPIView):
+    serializer_class = EntitySerializer
+
+class AddAlias(CreateAPIView):
+    serializer_class = AliasSerializer
