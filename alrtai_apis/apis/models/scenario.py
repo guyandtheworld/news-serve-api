@@ -38,12 +38,13 @@ class BucketWeight(models.Model):
 class ModelDetail(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
+    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     version = models.SmallIntegerField()
     storage_link = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.name
+        return "{} - {}".format(self.name, self.version)
 
 
 class BucketModel(models.Model):
@@ -53,7 +54,8 @@ class BucketModel(models.Model):
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.bucketID + self.modelID
+        return "{} - {} - V{}".format(self.bucketID.name, self.modelID.name,
+                                      self.modelID.version)
 
 
 class Source(models.Model):

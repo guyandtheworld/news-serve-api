@@ -18,6 +18,7 @@ from .models.users import User, Client, UserScenario
 from .models.entity import Entity
 from .seralizers import EntitySerializer, AliasSerializer
 
+
 class GenericGET(views.APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -92,7 +93,8 @@ class GetUserDefaultScenario(GenericGET):
 
 class GetScenarioName(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User.defaultScenario.name)
+        data = self.getSingleObjectFromPOST(
+            request, "uuid", "uuid", User.defaultScenario.name)
         if data:
             return Response({"success": True, "name": data.name})
         return Response({"success": False})
@@ -100,25 +102,31 @@ class GetScenarioName(GenericGET):
 
 class GetBuckets(GenericGET):
     def post(self, request):
-        data = self.getManyObjectsFromPOST(request, "uuid", "scenarioID", Bucket)
+        data = self.getManyObjectsFromPOST(
+            request, "uuid", "scenarioID", Bucket)
         if data:
             return Response(
-                {"success": True, "result": serializers.serialize("json", data)}
+                {"success": True, "result": serializers.serialize(
+                    "json", data)}
             )
         return Response({"success": False})
 
 
 class GetBucketWeights(GenericGET):
     def post(self, request):
-        data = self.getManyObjectsFromPOST(request, "uuid", "userID", BucketWeight)
+        data = self.getManyObjectsFromPOST(
+            request, "uuid", "userID", BucketWeight)
         if data:
             return Response(
-                {"success": True, "result": serializers.serialize("json", data)}
+                {"success": True, "result": serializers.serialize(
+                    "json", data)}
             )
         return Response({"success": False})
 
+
 class AddEntity(CreateAPIView):
     serializer_class = EntitySerializer
+
 
 class AddAlias(CreateAPIView):
     serializer_class = AliasSerializer
