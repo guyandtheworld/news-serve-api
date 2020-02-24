@@ -18,6 +18,7 @@ class Bucket(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
+    model_label = models.CharField(max_length=100)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
 
     def __str__(self):
