@@ -31,7 +31,7 @@ class GenericGET(views.APIView):
         if key in json_data:
             data = json_data[key]
             obj = ModelName.objects.filter(**{column: data}).first()
-            if obj == None:
+            if obj is None:
                 return False
             return obj
         return False
@@ -40,7 +40,7 @@ class GenericGET(views.APIView):
         if key in request.data:
             data = request.data[key]
             obj = ModelName.objects.filter(**{column: data})
-            if obj == None:
+            if obj is None:
                 return False
             return obj
         return False
