@@ -80,13 +80,14 @@ class BucketScore(models.Model):
                             editable=False)
     storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
     entryTime = models.DateTimeField()
+    storyDate = models.DateTimeField()
     sourceID = models.ForeignKey("Source", on_delete=models.CASCADE)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
-    grossScore = models.FloatField()
+    grossScore = models.IntegerField()
 
     def __str__(self):
-        return "{} - {}".format(self.storyID.name, self.bucketID.name)
+        return "{} - {}".format(self.storyID.title, self.bucketID.name)
 
 
 class EntityScore(models.Model):
@@ -98,7 +99,7 @@ class EntityScore(models.Model):
     sourceID = models.ForeignKey("Source", on_delete=models.CASCADE)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
-    grossScore = models.FloatField()
+    grossScore = models.IntegerField()
 
     def __str__(self):
-        return "{} - {}".format(self.storyID.name, self.bucketID.name)
+        return "{} - {}".format(self.storyID.title, self.bucketID.name)

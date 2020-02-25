@@ -42,6 +42,7 @@ class ModelDetail(models.Model):
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     version = models.SmallIntegerField()
+    bucket = models.CharField(max_length=100)
     storage_link = models.CharField(max_length=100)
 
     def __str__(self):
