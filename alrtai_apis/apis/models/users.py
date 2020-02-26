@@ -6,15 +6,15 @@ STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"))
 
 
 class Client(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
 
 
-class User(models.Model):
-    user = models.ForeignKey("User", on_delete=models.CASCADE),
+class DashUser(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     name = models.CharField(max_length=100)
@@ -31,7 +31,7 @@ class User(models.Model):
 class UserScenario(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    userID = models.ForeignKey("User", on_delete=models.CASCADE)
+    userID = models.ForeignKey("DashUser", on_delete=models.CASCADE)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -41,7 +41,7 @@ class UserScenario(models.Model):
 class Portfolio(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    userID = models.ForeignKey("User", on_delete=models.CASCADE)
+    userID = models.ForeignKey("DashUser", on_delete=models.CASCADE)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
 

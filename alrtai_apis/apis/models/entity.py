@@ -6,7 +6,8 @@ STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"))
 
 
 class Entity(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     lei = models.CharField(max_length=100, blank=True)
@@ -24,7 +25,8 @@ class Entity(models.Model):
 
 
 class Alias(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
 
@@ -36,13 +38,15 @@ class Alias(models.Model):
 
 
 class LastScrape(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
-    scrapeSourceID = models.ForeignKey("ScrapeSource", on_delete=models.CASCADE)
+    scrapeSourceID = models.ForeignKey(
+        "ScrapeSource", on_delete=models.CASCADE)
     lastScraped = models.DateTimeField()
 
     def __str__(self):
-        return "{} - {} - {}".format(self.entityID.name, \
+        return "{} - {} - {}".format(self.entityID.name,
                                      self.scrapeSourceID.name, str(self.lastScraped))
 
     class Meta:
@@ -50,7 +54,8 @@ class LastScrape(models.Model):
 
 
 class ScrapeSource(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     scrapeInterval = models.IntegerField()
 

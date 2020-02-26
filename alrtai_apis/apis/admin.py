@@ -9,7 +9,7 @@ from .models.scenario import (
 )
 
 from .models.users import (
-    User,
+    DashUser,
     Client,
     UserScenario,
     Portfolio,
@@ -31,7 +31,7 @@ from .models.story import (
 
 admin.site.register(Client)
 admin.site.register(Scenario)
-admin.site.register(User)
+admin.site.register(DashUser)
 admin.site.register(UserScenario)
 admin.site.register(Bucket)
 admin.site.register(BucketWeight)

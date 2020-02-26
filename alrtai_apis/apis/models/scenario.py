@@ -29,7 +29,7 @@ class BucketWeight(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
-    userID = models.ForeignKey("User", on_delete=models.CASCADE)
+    userID = models.ForeignKey("DashUser", on_delete=models.CASCADE)
     weight = models.FloatField()
 
     def __str__(self):
