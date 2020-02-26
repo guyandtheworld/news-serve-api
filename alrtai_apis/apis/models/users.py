@@ -15,17 +15,16 @@ class Client(models.Model):
 
 
 class DashUser(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    name = models.CharField(max_length=100)
-    email = models.EmailField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUSES)
     clientID = models.ForeignKey("Client", on_delete=models.CASCADE)
     defaultScenario = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     setupDate = models.DateField()
 
     def __str__(self):
-        return self.name
+        return self.user.username
 
 
 class UserScenario(models.Model):
@@ -35,7 +34,7 @@ class UserScenario(models.Model):
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} - {}".format(self.userID.name, self.scenarioID.name)
+        return "{} - {}".format(self.userID.user.username, self.scenarioID.name)
 
 
 class Portfolio(models.Model):
@@ -46,7 +45,7 @@ class Portfolio(models.Model):
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} - {} - {}".format(self.userID.name, self.scenarioID.name,
+        return "{} - {} - {}".format(self.userID.user.username, self.scenarioID.name,
                                      self.entityID.name)
 
     class Meta:
