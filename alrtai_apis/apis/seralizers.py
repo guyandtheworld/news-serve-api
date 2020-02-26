@@ -7,6 +7,7 @@ class EntitySerializer(ModelSerializer):
         model = Entity
         exclude = ["uuid"]
 
+
 class AliasSerializer(ModelSerializer):
     class Meta:
         model = Alias

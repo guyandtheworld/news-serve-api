@@ -15,7 +15,7 @@ class Client(models.Model):
 
 
 class DashUser(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     status = models.CharField(max_length=10, choices=STATUSES)

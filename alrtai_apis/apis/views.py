@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.core import serializers
 from rest_framework.generics import CreateAPIView
 from rest_framework import views
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +15,7 @@ from .models.scenario import (
     BucketModel,
     Source,
 )
-from .models.users import User, Client, UserScenario
+from .models.users import DashUser, Client, UserScenario
 from .models.entity import Entity
 from .seralizers import EntitySerializer, AliasSerializer
 
@@ -48,15 +49,19 @@ class GenericGET(views.APIView):
 
 class GetUserUUID(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "email", "email", User)
-        if data:
-            return Response({"success": True, "uuid": data.uuid})
+
+        json_data = json.loads(request.body.decode("utf-8"))
+        if "email" in json_data:
+            data = json_data["email"]
+            data = DashUser.objects.filter(**{"user__email": data}).first()
+            if data:
+                return Response({"success": True, "uuid": data.uuid})
         return Response({"success": False})
 
 
 class GetClientUUID(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
             return Response({"success": True, "uuid": data.clientID.uuid})
         return Response({"success": False})
@@ -64,7 +69,7 @@ class GetClientUUID(GenericGET):
 
 class GetClientName(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
             return Response({"success": True, "name": data.clientID.name})
         return Response({"success": False})
@@ -72,7 +77,7 @@ class GetClientName(GenericGET):
 
 class GetUserStatus(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
             return Response({"success": True, "status": data.status})
         return Response({"success": False})
@@ -130,3 +135,9 @@ class AddEntity(CreateAPIView):
 
 class AddAlias(CreateAPIView):
     serializer_class = AliasSerializer
+
+
+class Logout(views.APIView):
+    def get(self, request, format=None):
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_200_OK)
