@@ -26,6 +26,9 @@ from .models.story import (
     Story,
     BucketScore,
     EntityScore,
+    StoryBody,
+    StoryEntities,
+    StorySentiment
 )
 
 
@@ -46,3 +49,6 @@ admin.site.register(ScrapeSource)
 admin.site.register(Story)
 admin.site.register(BucketScore)
 admin.site.register(EntityScore)
+admin.site.register(StoryBody)
+admin.site.register(StorySentiment)
+admin.site.register(StoryEntities)

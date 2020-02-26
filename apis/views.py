@@ -85,7 +85,7 @@ class GetUserStatus(GenericGET):
 
 class GetUserDefaultScenario(GenericGET):
     def post(self, request):
-        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", User)
+        data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
             return Response(
                 {
@@ -99,7 +99,7 @@ class GetUserDefaultScenario(GenericGET):
 class GetScenarioName(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(
-            request, "uuid", "uuid", User.defaultScenario.name)
+            request, "uuid", "uuid", DashUser.defaultScenario.name)
         if data:
             return Response({"success": True, "name": data.name})
         return Response({"success": False})
