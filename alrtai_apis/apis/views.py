@@ -7,6 +7,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from .models.scenario import (
     Scenario,
     Bucket,
@@ -47,16 +49,14 @@ class GenericGET(views.APIView):
         return False
 
 
-class GetUserUUID(GenericGET):
-    def post(self, request):
-
-        json_data = json.loads(request.body.decode("utf-8"))
-        if "email" in json_data:
-            data = json_data["email"]
-            data = DashUser.objects.filter(**{"user__email": data}).first()
-            if data:
-                return Response({"success": True, "uuid": data.uuid})
-        return Response({"success": False})
+class GetUserUUID(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        response = super(GetUserUUID, self).post(
+            request, *args, **kwargs)
+        token = Token.objects.get(key=response.data['token'])
+        dash_user = DashUser.objects.filter(
+            **{"user__id": token.user_id}).first()
+        return Response({'uuid': dash_user.uuid})
 
 
 class GetClientUUID(GenericGET):
