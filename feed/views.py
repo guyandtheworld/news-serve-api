@@ -1,6 +1,6 @@
 import json
 
-from datetime import datetime, timedelta
+
 from django.core import serializers
 from rest_framework import views
 from rest_framework.response import Response
@@ -15,9 +15,7 @@ from apis.models.entity import Entity
 
 from .utils import score_in_bulk
 from .serializers import StorySerializer
-
-
-DAYS = 1
+from .sql import user_portfolio
 
 
 class GenericGET(views.APIView):
@@ -75,40 +73,18 @@ class GetPortfolio(GenericGET):
             # fetch articles based on portfolio and
             # all the articles of the required companies
             # which are from the past 6 month and that's active
-            start_date = datetime.now() - timedelta(days=DAYS)
             entity_ids = [str(c.uuid) for c in portfolio]
 
-            ids_str = "', '".join(entity_ids)
-
-            query = """
-                    select distinct unique_hash, stry.uuid,
-                    title, stry.url, search_keyword,
-                    published_date, internal_source, "domain",
-                    entry_created, "language", source_country,
-                    raw_file_source, "entityID_id"
-                    FROM public.apis_story as stry
-                    inner join
-                    (select * from apis_storybody as2 where
-                    status_code = 200) as stby
-                    on stry.uuid = stby."storyID_id"
-                    and "language" in ('english', 'US')
-                    and "entityID_id" in ('{}')
-                    and published_date > '{}'
-                    """
-
-            stories = Story.objects.raw(query.format(ids_str, str(start_date)))
+            stories = user_portfolio(entity_ids)
 
             if len(stories) == 0:
                 message = "no articles found"
                 return Response({"success": True, "message": message})
-            print(len(stories))
 
-            stories = StorySerializer(stories, many=True)
-            stories = json.loads(JSONRenderer().render(stories.data))
+            print(stories[0])
+            # serialized_stories = score_in_bulk(stories)
 
-            serialized_stories = score_in_bulk(stories)
-
-            print(serialized_stories[:500])
+            # print(serialized_stories[:500])
             # return Response({"success": True,
             #                  "samples": len(serialized_stories),
             #                  "data": serialized_stories})
