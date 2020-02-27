@@ -1,21 +1,23 @@
 import json
 
 from datetime import datetime, timedelta
-from django.shortcuts import render
 from django.core import serializers
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 
-from apis.models.users import DashUser, Portfolio
+from apis.models.users import DashUser
 from apis.models.scenario import Scenario
 from apis.models.story import Story
 from apis.models.entity import Entity
 
 from .utils import score_in_bulk
+from .serializers import StorySerializer
 
-DAYS = 30
+
+DAYS = 1
 
 
 class GenericGET(views.APIView):
@@ -93,16 +95,22 @@ class GetPortfolio(GenericGET):
                     and "entityID_id" in ('{}')
                     and published_date > '{}'
                     """
+
             stories = Story.objects.raw(query.format(ids_str, str(start_date)))
 
             if len(stories) == 0:
                 message = "no articles found"
                 return Response({"success": True, "message": message})
+            print(len(stories))
+
+            stories = StorySerializer(stories, many=True)
+            stories = json.loads(JSONRenderer().render(stories.data))
 
             serialized_stories = score_in_bulk(stories)
 
-            return Response({"success": True,
-                             "samples": len(serialized_stories),
-                             "data": serialized_stories})
+            print(serialized_stories[:500])
+            # return Response({"success": True,
+            #                  "samples": len(serialized_stories),
+            #                  "data": serialized_stories})
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})

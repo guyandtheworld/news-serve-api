@@ -19,7 +19,7 @@ from .models.scenario import (
 )
 from .models.users import DashUser, Client, UserScenario
 from .models.entity import Entity
-from .seralizers import EntitySerializer, AliasSerializer
+from .serializers import EntitySerializer, AliasSerializer
 
 
 class GenericGET(views.APIView):

@@ -33,7 +33,8 @@ class Story(models.Model):
 class StoryBody(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    storyID = models.ForeignKey(
+        "Story", on_delete=models.CASCADE, related_name="story_body")
     body = models.CharField(max_length=10000, blank=True, null=True)
     status_code = models.IntegerField(blank=True, null=True)
     entryTime = models.DateTimeField()
@@ -48,7 +49,8 @@ class StoryBody(models.Model):
 class StoryEntities(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    storyID = models.ForeignKey(
+        "Story", on_delete=models.CASCADE, related_name="story_entities")
     is_headline = models.BooleanField()
     entities = JSONField()
     entryTime = models.DateTimeField()
@@ -63,7 +65,8 @@ class StoryEntities(models.Model):
 class StorySentiment(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
-    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+    storyID = models.ForeignKey(
+        "Story", on_delete=models.CASCADE, related_name="story_sentiment")
     is_headline = models.BooleanField()
     sentiment = JSONField()
     entryTime = models.DateTimeField()
