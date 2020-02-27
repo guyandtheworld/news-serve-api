@@ -2,7 +2,7 @@ from django.db import connection
 from datetime import datetime, timedelta
 
 
-PORTFOLIO_DAYS = 10
+PORTFOLIO_DAYS = 150
 
 
 def dictfetchall(cursor):

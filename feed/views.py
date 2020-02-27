@@ -1,20 +1,16 @@
 import json
 
 
-from django.core import serializers
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.renderers import JSONRenderer
 
 from apis.models.users import DashUser
 from apis.models.scenario import Scenario
-from apis.models.story import Story
 from apis.models.entity import Entity
 
 from .utils import score_in_bulk
-from .serializers import StorySerializer
 from .sql import user_portfolio
 
 
@@ -81,12 +77,10 @@ class GetPortfolio(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            print(stories[0])
-            # serialized_stories = score_in_bulk(stories)
+            processed_stories = score_in_bulk(stories)
 
-            # print(serialized_stories[:500])
-            # return Response({"success": True,
-            #                  "samples": len(serialized_stories),
-            #                  "data": serialized_stories})
+            return Response({"success": True,
+                             "samples": len(processed_stories),
+                             "data": processed_stories})
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})
