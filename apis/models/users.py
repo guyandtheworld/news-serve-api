@@ -34,7 +34,8 @@ class UserScenario(models.Model):
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} - {}".format(self.userID.user.username, self.scenarioID.name)
+        return "{} - {}".format(self.userID.user.username,
+                                self.scenarioID.name)
 
 
 class Portfolio(models.Model):
@@ -45,7 +46,8 @@ class Portfolio(models.Model):
     entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
 
     def __str__(self):
-        return "{} - {} - {}".format(self.userID.user.username, self.scenarioID.name,
+        return "{} - {} - {}".format(self.userID.user.username,
+                                     self.scenarioID.name,
                                      self.entityID.name)
 
     class Meta:
