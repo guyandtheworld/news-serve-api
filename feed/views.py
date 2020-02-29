@@ -11,7 +11,7 @@ from apis.models.scenario import Scenario
 from apis.models.entity import Entity
 
 from .utils import score_in_bulk
-from .sql import user_portfolio
+from .sql import user_portfolio, user_entity
 
 
 class GenericGET(views.APIView):
@@ -82,5 +82,33 @@ class GetPortfolio(GenericGET):
             return Response({"success": True,
                              "samples": len(processed_stories),
                              "data": processed_stories})
+        message = "user or scenario doesn't exist"
+        return Response({"success": False, "message": message})
+
+
+class GetEntity(GenericGET):
+    """
+    generate feed of a particular company
+    """
+
+    def post(self, request):
+        user = self.getSingleObjectFromPOST(
+            request, "user_uuid", "uuid", DashUser)
+        entity = self.getSingleObjectFromPOST(
+            request, "company_uuid", "uuid", Entity)
+        if user and entity:
+
+            stories = user_entity(entity.uuid)
+
+            if len(stories) == 0:
+                message = "no articles found"
+                return Response({"success": True, "message": message})
+
+            processed_stories = score_in_bulk(stories)
+
+            return Response({"success": True,
+                             "samples": len(processed_stories),
+                             "data": processed_stories})
+
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})
