@@ -135,13 +135,13 @@ class GetBucket(GenericGET):
                 message = "you're not subscribed to this scenario'"
                 return Response({"success": False, "message": message})
 
-            stories = user_bucket(entity.uuid)
+            stories = user_bucket(bucket.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories)
+            processed_stories = score_in_bulk(stories, bucket=True)
 
             return Response({"success": True,
                              "samples": len(processed_stories),

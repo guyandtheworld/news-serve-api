@@ -28,7 +28,7 @@ def presence_score(keyword, text, analytics_type):
         return score
 
 
-def hotness(article):
+def hotness(article, bucket=False):
     """
     adding to score if the company term is in title
     * domain score - domain reliability
@@ -46,6 +46,11 @@ def hotness(article):
     # presence of keyword in body
     s += presence_score(keyword.lower(), article["body"].lower(), "body")
 
+    if bucket:
+        # bucket score + source score
+        s += (article["grossScore"] * 100)
+        s += (article["sourceScore"] * 100)
+
     baseScore = math.log(max(s, 1))
 
     timeDiff = (datetime.now() - article["published_date"]).days
@@ -60,7 +65,7 @@ def hotness(article):
     return baseScore
 
 
-def score_in_bulk(articles):
+def score_in_bulk(articles, bucket=False):
     """
     convert db object into dictionary and cleans
     and scores the data
@@ -69,7 +74,10 @@ def score_in_bulk(articles):
     df = pd.DataFrame(list(articles))
 
     df["published_date"] = df["published_date"].dt.tz_localize(None)
-    df["hotness"] = df.apply(hotness, axis=1)
+    if bucket:
+        df["hotness"] = df.apply(lambda x: hotness(x, bucket=True), axis=1)
+    else:
+        df["hotness"] = df.apply(hotness, axis=1)
 
     # use unique hash to eliminate duplicates
     df.drop_duplicates("unique_hash", inplace=True)
@@ -78,4 +86,5 @@ def score_in_bulk(articles):
     df = df.sort_values(['hotness'], ascending=False)
     result_sample = df.head(200)
     result_sample['uuid'] = result_sample['uuid'].apply(str)
+    result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
     return result_sample.to_dict(orient='records')
