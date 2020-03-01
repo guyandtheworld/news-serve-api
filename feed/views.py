@@ -7,11 +7,11 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from apis.models.users import DashUser
-from apis.models.scenario import Scenario
+from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
 from .utils import score_in_bulk
-from .sql import user_portfolio, user_entity
+from .sql import user_portfolio, user_entity, user_bucket
 
 
 class GenericGET(views.APIView):
@@ -50,6 +50,9 @@ class GetPortfolio(GenericGET):
         user = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
+
+        # check if user is subscribed to the scenario
+
         if user and scenario:
             query = """
                         select * from public.apis_entity as2 where uuid in
@@ -96,7 +99,7 @@ class GetEntity(GenericGET):
             request, "user_uuid", "uuid", DashUser)
         entity = self.getSingleObjectFromPOST(
             request, "company_uuid", "uuid", Entity)
-        if user and entity:
+        if entity:
 
             stories = user_entity(entity.uuid)
 
@@ -110,5 +113,39 @@ class GetEntity(GenericGET):
                              "samples": len(processed_stories),
                              "data": processed_stories})
 
-        message = "user or scenario doesn't exist"
+        message = "user or entity doesn't exist"
+        return Response({"success": False, "message": message})
+
+
+class GetBucket(GenericGET):
+    """
+    generate feed of a particular bucket based on
+    BucketScore table
+    """
+
+    def post(self, request):
+        user = self.getSingleObjectFromPOST(
+            request, "user_uuid", "uuid", DashUser)
+        bucket = self.getSingleObjectFromPOST(
+            request, "bucket_uuid", "uuid", Bucket)
+
+
+        if user and bucket:
+            if user.defaultScenario != bucket.scenarioID:
+                message = "you're not subscribed to this scenario'"
+                return Response({"success": False, "message": message})
+
+            stories = user_bucket(entity.uuid)
+
+            if len(stories) == 0:
+                message = "no articles found"
+                return Response({"success": True, "message": message})
+
+            processed_stories = score_in_bulk(stories)
+
+            return Response({"success": True,
+                             "samples": len(processed_stories),
+                             "data": processed_stories})
+
+        message = "user or bucket doesn't exist"
         return Response({"success": False, "message": message})
