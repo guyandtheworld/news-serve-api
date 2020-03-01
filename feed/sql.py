@@ -131,25 +131,30 @@ def user_bucket(bucket_id):
     start_date = "'{}'".format(start_date)
 
     query = """
-        select distinct unique_hash, stry.uuid,
-        title, stry.url, search_keyword,
-        published_date, internal_source, "domain",
-        source_country, "entityID_id", ent."name", "language",
-        "storyDate", "source", "grossScore", "sourceScore",
-        title_entities.entities as title_entities,
-        title_sntmnt.sentiment as title_sentiment,
-        body_entities.entities as body_entities,
-        body_sentiment.sentiment as body_sentiment,
-        stry_bdy_tbl.body from apis_story stry
-        inner join
-        (select "storyID_id", "storyDate", src."name" as source,
-        "grossScore", src.score as "sourceScore" from
-        (select * from apis_bucketscore where
-        "bucketID_id" = '2fa858cf-f8c3-4fe8-bd02-ae66aae2b909') bktscr
-        inner join (select * from apis_source) src
-        on src.uuid = bktscr."sourceID_id") tbl
-        on stry.uuid = tbl."storyID_id"
-        and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-        and published_date > %s
-        {}
-        """.format(EXTRA_INFO)
+            select distinct unique_hash, stry.uuid,
+            title, stry.url, search_keyword,
+            published_date, internal_source, "domain",
+            source_country, "entityID_id", ent."name", "language",
+            "storyDate", "source", "grossScore", "sourceScore",
+            title_entities.entities as title_entities,
+            title_sntmnt.sentiment as title_sentiment,
+            body_entities.entities as body_entities,
+            body_sentiment.sentiment as body_sentiment,
+            stry_bdy_tbl.body from apis_story stry
+            inner join
+            (select "storyID_id", "storyDate", src."name" as source,
+            "grossScore", src.score as "sourceScore" from
+            (select * from apis_bucketscore where
+            "bucketID_id" = '2fa858cf-f8c3-4fe8-bd02-ae66aae2b909') bktscr
+            inner join (select * from apis_source) src
+            on src.uuid = bktscr."sourceID_id") tbl
+            on stry.uuid = tbl."storyID_id"
+            and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+            and published_date > %s
+            {}
+            """.format(EXTRA_INFO)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, [start_date])
+        rows = dictfetchall(cursor)
+    return rows
