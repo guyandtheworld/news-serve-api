@@ -2,7 +2,7 @@ from django.db import connection
 from datetime import datetime, timedelta
 
 
-PORTFOLIO_DAYS = 15
+PORTFOLIO_DAYS = 150
 
 # get entity name, and story body
 # get entities from title and body
@@ -119,6 +119,35 @@ def user_bucket(bucket_id):
             and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s {}
             """.format(id_str, EXTRA_INFO)
 
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, [start_date])
+        rows = dictfetchall(cursor)
+    return rows
+
+
+def user_entity_bucket(bucket_id, entity_id):
+    bucket_id = "'{}'".format(bucket_id)
+    entity_id = "'{}'".format(entity_id)
+    start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
+    start_date = "'{}'".format(start_date)
+
+    query = """
+            select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+            published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
+            "source", "grossScore", "sourceScore", title_entities.entities as title_entities,
+            title_sntmnt.sentiment as title_sentiment, body_entities.entities as body_entities,
+            body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
+            inner join
+            (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
+            (select * from apis_bucketscore where "bucketID_id" = {}) bktscr
+            inner join
+            (select * from apis_source) src
+            on src.uuid = bktscr."sourceID_id") tbl
+            on stry.uuid = tbl."storyID_id"
+            and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and "entityID_id" = {}
+            {}
+            """.format(bucket_id, entity_id, EXTRA_INFO)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date])

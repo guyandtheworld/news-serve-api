@@ -11,7 +11,7 @@ from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
 from .utils import score_in_bulk
-from .sql import user_portfolio, user_entity, user_bucket
+from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket
 
 
 class GenericGET(views.APIView):
@@ -100,7 +100,6 @@ class GetEntity(GenericGET):
         entity = self.getSingleObjectFromPOST(
             request, "company_uuid", "uuid", Entity)
         if entity:
-
             stories = user_entity(entity.uuid)
 
             if len(stories) == 0:
@@ -129,13 +128,50 @@ class GetBucket(GenericGET):
         bucket = self.getSingleObjectFromPOST(
             request, "bucket_uuid", "uuid", Bucket)
 
-
         if user and bucket:
             if user.defaultScenario != bucket.scenarioID:
                 message = "you're not subscribed to this scenario'"
                 return Response({"success": False, "message": message})
 
             stories = user_bucket(bucket.uuid)
+
+            if len(stories) == 0:
+                message = "no articles found"
+                return Response({"success": True, "message": message})
+
+            processed_stories = score_in_bulk(stories, bucket=True)
+
+            return Response({"success": True,
+                             "samples": len(processed_stories),
+                             "data": processed_stories})
+
+        message = "user or bucket doesn't exist"
+        return Response({"success": False, "message": message})
+
+
+class GetBucketEntity(GenericGET):
+    """
+    generate feed of a particular entity based on a bucket
+    """
+
+    def post(self, request):
+        user = self.getSingleObjectFromPOST(
+            request, "user_uuid", "uuid", DashUser)
+        bucket = self.getSingleObjectFromPOST(
+            request, "bucket_uuid", "uuid", Bucket)
+        entity = self.getSingleObjectFromPOST(
+            request, "entity_uuid", "uuid", Entity)
+
+        if user and bucket and entity:
+            if user.defaultScenario != bucket.scenarioID:
+                message = "you're not subscribed to this scenario'"
+                return Response({"success": False, "message": message})
+
+            if entity.scenarioID != bucket.scenarioID:
+                message = "this entity is not tracked under this scenario'"
+                return Response({"success": False, "message": message})
+
+            stories = user_entity_bucket(bucket.uuid, entity.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"
