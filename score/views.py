@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 
 from rest_framework import views
 from rest_framework.response import Response
@@ -8,6 +9,9 @@ from rest_framework.permissions import IsAuthenticated
 from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
+
+from .sql import portfolio_score
+from .utils import hotness
 
 
 class GenericGET(views.APIView):
@@ -43,6 +47,36 @@ class GetPortfolioScore(GenericGET):
     """
 
     def post(self, request):
-        user = self.getSingleObjectFromPOST(
-            request, "user_uuid", "uuid", DashUser)
-        return Response({"success": False, "message": "message"})
+        user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
+        scenario = self.getSingleObjectFromPOST(
+            request, "scenario", "uuid", Scenario)
+
+        # check if user is subscribed to the scenario
+
+        if user and scenario:
+            query = """
+                        select * from public.apis_entity as2 where uuid in
+                        (
+                        select "entityID_id" from public.apis_portfolio
+                        where "userID_id" = '{}'
+                        and "scenarioID_id" = '{}'
+                        )
+                    """
+            portfolio = Entity.objects.raw(
+                query.format(user.uuid, scenario.uuid))
+
+            portfolio = [c for c in portfolio]
+
+            if len(portfolio) == 0:
+                message = "no companies in portfolio"
+                return Response({"success": True, "data": message})
+
+            entity_ids = [str(c.uuid) for c in portfolio]
+            entity_scores = portfolio_score(entity_ids)
+            df = pd.DataFrame(entity_scores)
+            df['score'] = df.apply(lambda x: hotness(x['grossScore'], x['timeDiff']), axis=1)
+            print(df.head())
+            # df.sum()
+            # df / len(df) # score for one entity, for a given bucket
+        message = "user or scenario doesn't exist"
+        return Response({"success": False, "message": message})
