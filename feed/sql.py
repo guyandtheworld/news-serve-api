@@ -95,13 +95,16 @@ def user_entity(entity_id):
     return rows
 
 
-def user_bucket(bucket_id):
+def user_bucket(bucket_id, entity_ids):
     """
     given a bucket id, generate feed to score the articles
     """
     start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
     start_date = "'{}'".format(start_date)
-    id_str = "'{}'".format(bucket_id)
+    bucket_id = "'{}'".format(bucket_id)
+
+    ids_str = "', '".join(entity_ids)
+    entity_ids = "('{}')".format(ids_str)
 
     query = """
             select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
@@ -111,13 +114,14 @@ def user_bucket(bucket_id):
             body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
             inner join
             (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-            (select * from apis_bucketscore where "bucketID_id" = {}) bktscr
+            (select * from apis_bucketscore where "bucketID_id" = {} and "grossScore" > .7) bktscr
             inner join
             (select * from apis_source) src
             on src.uuid = bktscr."sourceID_id") tbl
             on stry.uuid = tbl."storyID_id"
-            and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s {}
-            """.format(id_str, EXTRA_INFO)
+            and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s
+            and "entityID_id" in {} {}
+            """.format(bucket_id, entity_ids, EXTRA_INFO)
 
 
     with connection.cursor() as cursor:
@@ -140,7 +144,7 @@ def user_entity_bucket(bucket_id, entity_id):
             body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
             inner join
             (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-            (select * from apis_bucketscore where "bucketID_id" = {}) bktscr
+            (select * from apis_bucketscore where "bucketID_id" = {} and "grossScore" > .7) bktscr
             inner join
             (select * from apis_source) src
             on src.uuid = bktscr."sourceID_id") tbl

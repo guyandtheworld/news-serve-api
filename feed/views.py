@@ -64,6 +64,8 @@ class GetPortfolio(GenericGET):
             portfolio = Entity.objects.raw(
                 query.format(user.uuid, scenario.uuid))
 
+            portfolio = [c for c in portfolio]
+
             if len(portfolio) == 0:
                 message = "no companies in portfolio"
                 return Response({"success": True, "data": message})
@@ -132,7 +134,26 @@ class GetBucket(GenericGET):
                 message = "you're not subscribed to this scenario'"
                 return Response({"success": False, "message": message})
 
-            stories = user_bucket(bucket.uuid)
+            query = """
+                        select * from public.apis_entity as2 where uuid in
+                        (
+                        select "entityID_id" from public.apis_portfolio
+                        where "userID_id" = '{}'
+                        and "scenarioID_id" = '{}'
+                        )
+                    """
+            portfolio = Entity.objects.raw(
+                query.format(user.uuid, bucket.scenarioID.uuid))
+
+            portfolio = [c for c in portfolio]
+
+            if len(portfolio) == 0:
+                message = "no companies in portfolio"
+                return Response({"success": True, "data": message})
+
+            entity_ids = [str(c.uuid) for c in portfolio]
+
+            stories = user_bucket(bucket.uuid, entity_ids)
 
             if len(stories) == 0:
                 message = "no articles found"
