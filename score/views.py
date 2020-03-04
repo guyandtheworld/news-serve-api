@@ -10,7 +10,7 @@ from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
 from .sql import portfolio_score
-from .utils import hotness, convert_to_scores
+from .utils import hotness, get_gross_entity_score
 
 
 class GenericGET(views.APIView):
@@ -73,6 +73,11 @@ class GetPortfolioScore(GenericGET):
             entity_ids = [str(c.uuid) for c in portfolio]
             entity_scores = portfolio_score(entity_ids)
 
-            result = convert_to_scores(entity_scores)
+            scores = get_gross_entity_score(entity_scores)
+
+            return Response({"success": True,
+                             "samples": len(scores),
+                             "data": scores})
+
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})
