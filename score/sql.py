@@ -2,7 +2,10 @@ from django.db import connection
 from datetime import datetime, timedelta
 
 
-PORTFOLIO_DAYS = 150
+PORTFOLIO_DAYS = 100
+
+start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
+START_DATE = "'{}'".format(start_date)
 
 
 def dictfetchall(cursor):
@@ -16,24 +19,31 @@ def dictfetchall(cursor):
 
 def portfolio_score(entity_ids):
     """
-    Returns GrossScore and timedelta from published date for
-    aggregate GrossScore creation
+    Returns GrossScore, bucket and timedelta from published date for
+    aggregate GrossScore creation where bucket is other
     """
     # id_str = "'{}'".format(entity_id)
 
+
+
     query = """
-            select "grossScore",
+            select ae."entityID_id"::text, entty."name", "bucketID_id"::text, "grossScore",
             extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff"
-            from apis_entityscore ae inner join apis_story sty
+            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            apis_entityscore ae
+            inner join apis_story sty
             on ae."storyID_id" = sty.uuid
-            where ae."entityID_id"='7970dac1-ca3c-4dc0-814f-f13226eb14db'
-            and "bucketID_id"='2fa858cf-f8c3-4fe8-bd02-ae66aae2b909'
-            and published_date > '2020-01-01'
+            inner join apis_bucket bckt
+            on ae."bucketID_id" = bckt.uuid
+            inner join apis_entity entty
+            on ae."entityID_id" = entty.uuid
+            where ae."entityID_id" in ('56969f44-41fa-4ced-8c71-ef88fe91cec6')
+            and model_label != 'other'
+            and published_date > %s
             """
 
     with connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, [START_DATE])
         rows = dictfetchall(cursor)
     return rows
 

@@ -1,5 +1,4 @@
 import json
-import pandas as pd
 
 from rest_framework import views
 from rest_framework.response import Response
@@ -11,7 +10,7 @@ from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
 from .sql import portfolio_score
-from .utils import hotness
+from .utils import hotness, convert_to_scores
 
 
 class GenericGET(views.APIView):
@@ -73,10 +72,7 @@ class GetPortfolioScore(GenericGET):
 
             entity_ids = [str(c.uuid) for c in portfolio]
             entity_scores = portfolio_score(entity_ids)
-            df = pd.DataFrame(entity_scores)
-            df['score'] = df.apply(lambda x: hotness(x['grossScore'], x['timeDiff']), axis=1)
-            print(df.head())
-            # df.sum()
-            # df / len(df) # score for one entity, for a given bucket
+
+            result = convert_to_scores(entity_scores)
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})
