@@ -1,5 +1,6 @@
 import json
 
+from django.db.models import Q
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
@@ -9,8 +10,8 @@ from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
-from .sql import portfolio_score
-from .utils import hotness, get_gross_entity_score
+from .sql import portfolio_score, bucket_score
+from .utils import get_gross_entity_score, get_gross_bucket_scores
 
 
 class GenericGET(views.APIView):
@@ -51,6 +52,10 @@ class GetPortfolioScore(GenericGET):
             request, "scenario", "uuid", Scenario)
 
         # check if user is subscribed to the scenario
+        if user.defaultScenario != scenario:
+            message = "user is not subscribed to the scenario"
+            return Response({"success": False, "message": message})
+
 
         if user and scenario:
             query = """
@@ -78,6 +83,45 @@ class GetPortfolioScore(GenericGET):
             return Response({"success": True,
                              "samples": len(scores),
                              "data": scores})
+
+        message = "user or scenario doesn't exist"
+        return Response({"success": False, "message": message})
+
+
+class GetBucketScore(GenericGET):
+    """
+    generate score for all buckets of Scenario
+    """
+
+    def post(self, request):
+        user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
+        scenario = self.getSingleObjectFromPOST(
+            request, "scenario", "uuid", Scenario)
+
+        # check if user is subscribed to the scenario
+        if user.defaultScenario != scenario:
+            message = "user is not subscribed to the scenario"
+            return Response({"success": False, "message": message})
+
+        if user and scenario:
+
+            # get all buckets except the other model
+            buckets = Bucket.objects.filter(~Q(model_label = "other"),
+                                            scenarioID=str(scenario.uuid))
+
+            if len(list(buckets)) == 0:
+                message = "no buckets in this scenario"
+                return Response({"success": True, "data": message})
+
+            bucket_ids = [str(b.uuid) for b in buckets]
+            scores = bucket_score(bucket_ids)
+
+            scores = get_gross_bucket_scores(scores)
+
+            return Response({"success": True,
+                             "samples": len(scores),
+                             "data": scores})
+
 
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})

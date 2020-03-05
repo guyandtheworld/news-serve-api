@@ -2,7 +2,7 @@ from django.db import connection
 from datetime import datetime, timedelta
 
 
-PORTFOLIO_DAYS = 150
+PORTFOLIO_DAYS = 15
 
 start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
 START_DATE = "'{}'".format(start_date)
@@ -41,6 +41,35 @@ def portfolio_score(entity_ids):
             and model_label != 'other'
             and published_date > %s
             """.format(entity_ids)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, [START_DATE])
+        rows = dictfetchall(cursor)
+    return rows
+
+
+def bucket_score(bucket_ids):
+    """
+    Returns GrossScore for each Bucket, bucket and timedelta
+    from published date for aggregate GrossScore creation
+    where bucket is not other
+    """
+
+    bucket_ids = "', '".join(bucket_ids)
+    bucket_ids = "('{}')".format(bucket_ids)
+
+    query = """
+            select bckt."name", "bucketID_id"::text, "grossScore",
+            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
+            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            apis_bucketscore ae
+            inner join apis_story sty
+            on ae."storyID_id" = sty.uuid
+            inner join apis_bucket bckt
+            on ae."bucketID_id" = bckt.uuid
+            where "bucketID_id" in {}
+            and published_date > %s
+            """.format(bucket_ids)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [START_DATE])

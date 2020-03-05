@@ -17,7 +17,7 @@ def hotness(baseScore, timeDiff):
 
 def get_gross_entity_score(entity_scores):
     """
-    Generates Scores for a particular entity by
+    Generates Scores for entities in a portfolio by
     * Fetching all grossScore for past N days
     * Decaying score based on timeDiff
     * Aggregating scores for each bucket g1*t1
@@ -42,7 +42,34 @@ def get_gross_entity_score(entity_scores):
         obj = {}
         obj["uuid"] = entity
         obj["name"] = bucket_scores["name"].values[0]
-        obj["gross_entity_score"] = round(gross_entity_score*1000, 2)
+        obj["gross_entity_score"] = round(gross_entity_score*100, 2)
         scores.append(obj)
 
     return scores
+
+
+def get_gross_bucket_scores(bucket_scores):
+    """
+    Generates Scores for a buckets of a scenario
+    * Fetching all grossScore for past N days
+    * Decaying score based on timeDiff
+    * Aggregating scores for each bucket g1*t1
+    * Average of all Buckets
+    """
+    df = pd.DataFrame(bucket_scores)
+    df["score"] = df.apply(lambda x: hotness(x['grossScore'], x['timeDiff']), axis=1)
+    scores = []
+    df.drop(['grossScore', 'timeDiff'], axis=1, inplace=True)
+
+    bucket_scores = df.groupby(['bucketID_id', "name"])["score"].agg(['sum', 'count'])
+    bucket_scores = bucket_scores.reset_index()
+
+    # normalize score by dividing the sum with the amount of articles
+    bucket_scores['score'] = np.where(bucket_scores['count'] < 1, \
+        bucket_scores['count'], bucket_scores['sum']/bucket_scores['count'])
+
+    bucket_scores.drop(["sum", "count"], axis=1, inplace=True)
+
+    bucket_scores["score"] *= 100
+    bucket_scores["score"] = bucket_scores["score"].apply(lambda x: round(x, 2))
+    return bucket_scores.to_dict('records')
