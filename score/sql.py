@@ -75,3 +75,31 @@ def bucket_score(bucket_ids):
         cursor.execute(query, [START_DATE])
         rows = dictfetchall(cursor)
     return rows
+
+
+def entity_bucket_score(entity_id):
+    """
+    Returns GrossScore, bucket and timedelta for
+    a given entity
+    """
+
+    query = """
+            select bckt."name", "bucketID_id"::text, "grossScore",
+            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
+            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            apis_entityscore ae
+            inner join apis_story sty
+            on ae."storyID_id" = sty.uuid
+            inner join apis_bucket bckt
+            on ae."bucketID_id" = bckt.uuid
+            inner join apis_entity entty
+            on ae."entityID_id" = entty.uuid
+            where ae."entityID_id" = %s
+            and model_label != 'other'
+            and published_date > %s
+            """
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, [entity_id, START_DATE])
+        rows = dictfetchall(cursor)
+    return rows

@@ -10,7 +10,7 @@ from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
-from .sql import portfolio_score, bucket_score
+from .sql import portfolio_score, bucket_score, entity_bucket_score
 from .utils import get_gross_entity_score, get_gross_bucket_scores
 
 
@@ -124,4 +124,36 @@ class GetBucketScore(GenericGET):
 
 
         message = "user or scenario doesn't exist"
+        return Response({"success": False, "message": message})
+
+
+
+class GetEntityBucketScore(GenericGET):
+    """
+    generate score for all buckets of Scenario
+    """
+
+    def post(self, request):
+        user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
+        scenario = self.getSingleObjectFromPOST(
+            request, "scenario", "uuid", Scenario)
+        entity = self.getSingleObjectFromPOST(
+            request, "entity", "uuid", Entity)
+
+
+        # check if user is subscribed to the scenario
+        if user.defaultScenario != scenario:
+            message = "user is not subscribed to the scenario"
+            return Response({"success": False, "message": message})
+
+        if user and scenario and entity:
+            entity_scores = entity_bucket_score(entity.uuid)
+            scores = get_gross_bucket_scores(entity_scores)
+
+            return Response({"success": True,
+                             "samples": len(scores),
+                             "data": scores})
+
+
+        message = "user or scenario or entity doesn't exist"
         return Response({"success": False, "message": message})

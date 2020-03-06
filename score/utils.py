@@ -58,7 +58,6 @@ def get_gross_bucket_scores(bucket_scores):
     """
     df = pd.DataFrame(bucket_scores)
     df["score"] = df.apply(lambda x: hotness(x['grossScore'], x['timeDiff']), axis=1)
-    scores = []
     df.drop(['grossScore', 'timeDiff'], axis=1, inplace=True)
 
     bucket_scores = df.groupby(['bucketID_id', "name"])["score"].agg(['sum', 'count'])
