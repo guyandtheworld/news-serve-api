@@ -10,8 +10,9 @@ from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
-from .sql import portfolio_score, bucket_score, entity_bucket_score
-from .utils import get_gross_entity_score, get_gross_bucket_scores
+from .sql import (portfolio_score, bucket_score,
+                  entity_bucket_score, portfolio_sentiment)
+from .utils import get_gross_entity_score, get_gross_bucket_scores, get_gross_sentiment_scores
 
 
 class GenericGET(views.APIView):
@@ -83,6 +84,55 @@ class GetPortfolioScore(GenericGET):
             return Response({"success": True,
                              "samples": len(scores),
                              "data": scores})
+
+        message = "user or scenario doesn't exist"
+        return Response({"success": False, "message": message})
+
+
+
+class GetSentiment(GenericGET):
+    """
+    generate sentiment for a user's portfolio
+    """
+
+    def post(self, request):
+        user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
+        scenario = self.getSingleObjectFromPOST(
+            request, "scenario", "uuid", Scenario)
+
+        # check if user is subscribed to the scenario
+        if user.defaultScenario != scenario:
+            message = "user is not subscribed to the scenario"
+            return Response({"success": False, "message": message})
+
+        if user and scenario:
+            query = """
+                        select * from public.apis_entity as2 where uuid in
+                        (
+                        select "entityID_id" from public.apis_portfolio
+                        where "userID_id" = '{}'
+                        and "scenarioID_id" = '{}'
+                        )
+                    """
+            portfolio = Entity.objects.raw(
+                query.format(user.uuid, scenario.uuid))
+
+
+            portfolio = [c for c in portfolio]
+
+            if len(portfolio) == 0:
+                message = "no companies in portfolio"
+                return Response({"success": True, "data": message})
+
+            entity_ids = [str(c.uuid) for c in portfolio]
+            entity_scores = portfolio_sentiment(entity_ids)
+
+            scores = get_gross_sentiment_scores(entity_scores)
+
+            return Response({"success": True,
+                             "samples": len(scores),
+                             "data": scores})
+
 
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})

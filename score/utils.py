@@ -72,3 +72,24 @@ def get_gross_bucket_scores(bucket_scores):
     bucket_scores["score"] *= 100
     bucket_scores["score"] = bucket_scores["score"].apply(lambda x: round(x, 2))
     return bucket_scores.to_dict('records')
+
+
+def get_gross_sentiment_scores(sentiment_scores):
+    """
+    Generates sentiment for a portfolio
+    """
+    df = pd.DataFrame(sentiment_scores)
+    df["score"] = df.apply(lambda x: hotness(x['sentiment'], x['timeDiff']), axis=1)
+    df.drop(['sentiment', 'timeDiff'], axis=1, inplace=True)
+
+    sentiment_scores = df.groupby(['entityID_id', "name"])["score"].agg(['sum', 'count'])
+    sentiment_scores = sentiment_scores.reset_index()
+
+    # normalize score by dividing the sum with the amount of articles
+    sentiment_scores['score'] = sentiment_scores['sum']/sentiment_scores['count']
+
+    sentiment_scores.drop(["sum", "count"], axis=1, inplace=True)
+
+    sentiment_scores["score"] *= 100
+    sentiment_scores["score"] = sentiment_scores["score"].apply(lambda x: round(x, 2))
+    return sentiment_scores.to_dict('records')
