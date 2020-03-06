@@ -120,7 +120,6 @@ def portfolio_count(entity_ids):
             apis_story as2 group by "entityID_id") grby
             inner join apis_entity entty on grby."entityID_id" = entty.uuid
             where entty.uuid in {}
-            and published_date > %s
             """.format(entity_ids)
 
     with connection.cursor() as cursor:
