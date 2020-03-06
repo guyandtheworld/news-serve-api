@@ -103,3 +103,52 @@ def entity_bucket_score(entity_id):
         cursor.execute(query, [entity_id, START_DATE])
         rows = dictfetchall(cursor)
     return rows
+
+
+
+def portfolio_count(entity_ids):
+    """
+    Returns news count for a user's portfolio
+    """
+
+    entity_ids = "', '".join(entity_ids)
+    entity_ids = "('{}')".format(entity_ids)
+
+    query = """
+            select entty.name, entty.uuid, news_count from
+            (select "entityID_id", count(*) as news_count from
+            apis_story as2 group by "entityID_id") grby
+            inner join apis_entity entty on grby."entityID_id" = entty.uuid
+            where entty.uuid in {}
+            """.format(entity_ids)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, [START_DATE])
+        rows = dictfetchall(cursor)
+    return rows
+
+
+def portfolio_sentiment(entity_ids):
+    """
+    Returns news count for a user's portfolio
+    """
+
+    entity_ids = "', '".join(entity_ids)
+    entity_ids = "('{}')".format(entity_ids)
+
+    query = """
+            select entty."name", "entityID_id", sentiment->'compound' as "sentiment",
+            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
+            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            apis_storysentiment as2
+            inner join apis_story sty
+            on as2."storyID_id" = sty.uuid
+            inner join apis_entity entty
+            on "entityID_id" = entty.uuid
+            where entty.uuid in {}
+            """.format(entity_ids)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query, [START_DATE])
+        rows = dictfetchall(cursor)
+    return rows
