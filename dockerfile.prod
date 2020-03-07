@@ -3,6 +3,6 @@ FROM python:3.7
 WORKDIR /app
 COPY . /app
 RUN pip install -r requirements.txt
-EXPOSE 8080
+EXPOSE 8000
 
-CMD ["uwsgi", "--http", ":8080", "--ini", "./uwsgi/uwsgi.ini"]
+CMD ["uwsgi", "--ini", "uwsgi/uwsgi.ini"]
