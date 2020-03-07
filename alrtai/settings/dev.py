@@ -9,8 +9,14 @@ SECRET_KEY = "gw7-@+(t!b$l^#i!yjn)0%tr6mgbzr)ze6--79d%2%im86!x=l"
 DEBUG = True
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'PASSWORD': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
+
+ALLOWED_HOSTS = ["*"]
