@@ -56,3 +56,4 @@ Content-Type: application/json
 
 ### Resources
 * [DRF Prod](https://dragonprogrammer.com/django-drf-api-production-docker/)
+* [Understanding uwsgi, threads, processes, and GIL](https://www.reddit.com/r/Python/comments/4s40ge/understanding_uwsgi_threads_processes_and_gil/)
