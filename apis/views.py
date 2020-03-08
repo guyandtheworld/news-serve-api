@@ -130,11 +130,38 @@ class GetBucketWeights(GenericGET):
 
 
 class AddEntity(CreateAPIView):
-    serializer_class = EntitySerializer
+    """
+    End-point to create entity.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        entity_serializer = EntitySerializer(data=request.data)
+        if entity_serializer.is_valid():
+            entity = entity_serializer.save()
+            return Response(
+                {"success": True, "entity_uuid": entity.uuid}
+            )
 
 
 class AddAlias(CreateAPIView):
-    serializer_class = AliasSerializer
+    """
+    End-point to create alias.
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        alias_serializer = AliasSerializer(data=request.data, many=True)
+        if alias_serializer.is_valid():
+            alias = alias_serializer.save()
+            alias_uuid = []
+            for obj in alias:
+                alias_uuid.append(obj.uuid)
+            return Response(
+                {"success": True, "alias_uuid": alias_uuid}
+            )
 
 
 class Logout(views.APIView):

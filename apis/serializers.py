@@ -3,6 +3,7 @@ from .models.entity import Entity, Alias
 
 
 class EntitySerializer(ModelSerializer):
+
     class Meta:
         model = Entity
         exclude = ["uuid"]
