@@ -5,7 +5,7 @@ services:
     container_name: alrtai
     build:
       context: .
-      dockerfile: docker/dockerfile.prod
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     env_file:
