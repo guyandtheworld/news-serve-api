@@ -39,22 +39,21 @@ Authorization: Token 9923488b8dd78a1fe99c2389be498c122688f2c7
 Content-Type: application/json
 ```
 
-### Deployment Options
+## Development
+  * `docker-compose -f docker-compose-dev.yml run apis python manage.py migrate`
+  * `docker-compose -f docker-compose-dev.yml run apis python manage.py createsuperuser`
+  * `docker-compose -f docker-compose-dev.yml  up --build`
 
-* Production checklist: `python manage.py check --deploy`
+## Production
+
+* `docker-compose -f docker-compose-prod.yml up --build`
 
 
 ### Issues
-
-- The password is currently just a `CharField`. Would be great if someone could implement hashing and other auth related things.
-- It just uses the default SQLite db for now.
-- It will accept requests from any client now. `Allowed-Hosts` has to be set to restrict incoming request origins.
-
-### To-Do
-
+* `Allowed-Hosts` has to be set to restrict incoming request origins.
 * use cloudflare for HTTPS serving
 * disable CORS
 
-
 ### Resources
 * [DRF Prod](https://dragonprogrammer.com/django-drf-api-production-docker/)
+* [Understanding uwsgi, threads, processes, and GIL](https://www.reddit.com/r/Python/comments/4s40ge/understanding_uwsgi_threads_processes_and_gil/)

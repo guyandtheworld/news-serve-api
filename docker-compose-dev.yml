@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=db
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ./.pgdata:/var/lib/postgresql/data/pgdata
+
+  apis:
+    container_name: alrtai
+    build:
+      context: .
+      dockerfile: docker/dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SETTINGS=dev
+    depends_on:
+      - db

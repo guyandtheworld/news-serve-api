@@ -2,7 +2,7 @@ from django.db import connection
 from datetime import datetime, timedelta
 
 
-PORTFOLIO_DAYS = 15
+PORTFOLIO_DAYS = 150
 
 start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
 START_DATE = "'{}'".format(start_date)
