@@ -36,7 +36,8 @@ INSTALLED_APPS = [
     "drf_yasg",
     "apis",
     "feed",
-    "score"
+    "score",
+    "entity"
 ]
 
 MIDDLEWARE = [
