@@ -15,5 +15,6 @@ urlpatterns = [
     path("getbucketweights", views.GetBucketWeights.as_view()),
     path("addentity", views.AddEntity.as_view()),
     path("addalias", views.AddAlias.as_view()),
-    path("logout", views.Logout.as_view())
+    path("logout", views.Logout.as_view()),
+    path("signup", views.SignUp.as_view()),
 ]

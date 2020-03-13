@@ -1,5 +1,5 @@
 import json
-from django.shortcuts import render
+
 from django.core import serializers
 from rest_framework.generics import CreateAPIView
 from rest_framework import views
@@ -10,16 +10,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from .models.scenario import (
-    Scenario,
     Bucket,
     BucketWeight,
-    ModelDetail,
-    BucketModel,
-    Source,
 )
-from .models.users import DashUser, Client, UserScenario
-from .models.entity import Entity
-from .serializers import EntitySerializer, AliasSerializer
+
+from .models.users import DashUser
+from .serializers import EntitySerializer, AliasSerializer, UserSerializer, DashUserSerializer
 
 
 class GenericGET(views.APIView):
@@ -168,3 +164,20 @@ class Logout(views.APIView):
     def get(self, request, format=None):
         request.user.auth_token.delete()
         return Response(status=status.HTTP_200_OK)
+
+
+class SignUp(CreateAPIView):
+    def post(self, request, *args, **kwargs):
+        user_form = UserSerializer(data=request.data)
+        dash_user_form = DashUserSerializer(data=request.data)
+
+        if user_form.is_valid(raise_exception=True) and \
+           dash_user_form.is_valid(raise_exception=True):
+
+            user_obj = user_form.save()
+            dash_user_obj = dash_user_form.save()
+            dash_user_obj.user = user_obj
+            dash_user_obj.save()
+            token = Token.objects.create(user=user_obj)
+            return Response({'token': str(token)})
+        return Response({"success": False})
