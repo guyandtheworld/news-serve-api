@@ -4,6 +4,8 @@ from django.core import serializers
 from rest_framework.generics import CreateAPIView
 from rest_framework import views
 from rest_framework import status
+from rest_framework import renderers
+from rest_framework import parsers
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
@@ -15,7 +17,7 @@ from .models.scenario import (
 )
 
 from .models.users import DashUser
-from .serializers import EntitySerializer, AliasSerializer, UserSerializer, DashUserSerializer
+from .serializers import EntitySerializer, AliasSerializer, UserSerializer, DashUserSerializer, AuthCustomTokenSerializer
 
 
 class GenericGET(views.APIView):
@@ -181,3 +183,27 @@ class SignUp(CreateAPIView):
             token = Token.objects.create(user=user_obj)
             return Response({'token': str(token)})
         return Response({"success": False})
+
+
+class ObtainCustomAuthToken(views.APIView):
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (
+        parsers.FormParser,
+        parsers.MultiPartParser,
+        parsers.JSONParser,
+    )
+
+    renderer_classes = (renderers.JSONRenderer,)
+
+    def post(self, request):
+        serializer = AuthCustomTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+
+        content = {
+            'token': str(token.key),
+        }
+
+        return Response(content)

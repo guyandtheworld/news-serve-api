@@ -4,7 +4,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 
 urlpatterns = [
-    path("apiauth", obtain_auth_token),
+    path("apiauth", views.ObtainCustomAuthToken.as_view()),
     path("getuuid", views.GetUserUUID.as_view()),
     path("getclientuuid", views.GetClientUUID.as_view()),
     path("getclientname", views.GetClientName.as_view()),
