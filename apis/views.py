@@ -62,6 +62,80 @@ class GetUserUUID(ObtainAuthToken):
         return Response({'uuid': dash_user.uuid})
 
 
+class SignUp(CreateAPIView):
+    """
+    Validates the data and creates a new account for a person
+    with corresponding Dash User
+    """
+    def post(self, request, *args, **kwargs):
+        user_form = UserSerializer(data=request.data)
+        dash_user_form = DashUserSerializer(data=request.data)
+
+        if user_form.is_valid(raise_exception=True) and \
+           dash_user_form.is_valid(raise_exception=True):
+
+            email = user_form.data['email']
+            if User.objects.filter(email=email).exists():
+                return Response({"error": "This email id already exists."})
+
+            user_obj = User.objects.create_user(
+                        first_name=user_form.data['first_name'],
+                        last_name=user_form.data['last_name'],
+                        username=user_form.data['email'],
+                        email=user_form.data['email'],
+                        password=user_form.data['password'])
+
+            client = get_object_or_404(Client,
+                        uuid=dash_user_form.data['clientID'])
+            scenario = get_object_or_404(Scenario,
+                        uuid=dash_user_form.data['defaultScenario'])
+
+            dash_user_obj = DashUser.objects.create(
+                user=user_obj,
+                status=dash_user_form.data['status'],
+                clientID=client,
+                defaultScenario=scenario
+            )
+
+            # create and return a token for the user
+            token = Token.objects.create(user=user_obj)
+            return Response({'token': str(token)})
+        return Response({"success": False})
+
+
+class Logout(views.APIView):
+    def get(self, request, format=None):
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_200_OK)
+
+
+class ObtainCustomAuthToken(views.APIView):
+    """
+    signing in using email and password
+    """
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (
+        parsers.FormParser,
+        parsers.MultiPartParser,
+        parsers.JSONParser,
+    )
+
+    renderer_classes = (renderers.JSONRenderer,)
+
+    def post(self, request):
+        serializer = AuthCustomTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+
+        content = {
+            'token': str(token.key),
+        }
+
+        return Response(content)
+
+
 class GetClientUUID(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
@@ -165,77 +239,3 @@ class AddAlias(CreateAPIView):
             return Response(
                 {"success": True, "alias_uuid": alias_uuid}
             )
-
-
-class Logout(views.APIView):
-    def get(self, request, format=None):
-        request.user.auth_token.delete()
-        return Response(status=status.HTTP_200_OK)
-
-
-class SignUp(CreateAPIView):
-    """
-    Validates the data and creates a new account for a person
-    with corresponding Dash User
-    """
-    def post(self, request, *args, **kwargs):
-        user_form = UserSerializer(data=request.data)
-        dash_user_form = DashUserSerializer(data=request.data)
-
-        if user_form.is_valid(raise_exception=True) and \
-           dash_user_form.is_valid(raise_exception=True):
-
-            email = user_form.data['email']
-            if User.objects.filter(email=email).exists():
-                return Response({"error": "This email id already exists."})
-
-            user_obj = User.objects.create_user(
-                        first_name=user_form.data['first_name'],
-                        last_name=user_form.data['last_name'],
-                        username=user_form.data['email'],
-                        email=user_form.data['email'],
-                        password=user_form.data['password'])
-
-            client = get_object_or_404(Client,
-                        uuid=dash_user_form.data['clientID'])
-            scenario = get_object_or_404(Scenario,
-                        uuid=dash_user_form.data['defaultScenario'])
-
-            dash_user_obj = DashUser.objects.create(
-                user=user_obj,
-                status=dash_user_form.data['status'],
-                clientID=client,
-                defaultScenario=scenario
-            )
-
-            # create and return a token for the user
-            token = Token.objects.create(user=user_obj)
-            return Response({'token': str(token)})
-        return Response({"success": False})
-
-
-class ObtainCustomAuthToken(views.APIView):
-    """
-    signing in using email and password
-    """
-    throttle_classes = ()
-    permission_classes = ()
-    parser_classes = (
-        parsers.FormParser,
-        parsers.MultiPartParser,
-        parsers.JSONParser,
-    )
-
-    renderer_classes = (renderers.JSONRenderer,)
-
-    def post(self, request):
-        serializer = AuthCustomTokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
-
-        content = {
-            'token': str(token.key),
-        }
-
-        return Response(content)
