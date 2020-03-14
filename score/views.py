@@ -13,7 +13,9 @@ from apis.models.entity import Entity
 from .sql import (portfolio_score, bucket_score,
                   entity_bucket_score, portfolio_sentiment,
                   portfolio_count)
-from .utils import get_gross_entity_score, get_gross_bucket_scores, get_gross_sentiment_scores
+from .utils import (get_gross_entity_score,
+                    get_gross_bucket_scores,
+                    get_gross_sentiment_scores)
 
 
 class GenericGET(views.APIView):
@@ -78,7 +80,20 @@ class GetPortfolioScore(GenericGET):
                 return Response({"success": True, "data": message})
 
             entity_ids = [str(c.uuid) for c in portfolio]
-            entity_scores = portfolio_score(entity_ids)
+            entity_scores = portfolio_score(entity_ids, scenario.uuid)
+
+            # if no scores return 0
+            scores = []
+            if len(entity_scores) == 0:
+                obj = {}
+                for entity in portfolio:
+                    obj["uuid"] = entity.uuid
+                    obj["name"] = entity.name
+                    obj["gross_entity_score"] = 0
+                    scores.append(obj)
+                return Response({"success": True,
+                                 "samples": len(scores),
+                                 "data": scores})
 
             scores = get_gross_entity_score(entity_scores)
 
@@ -208,18 +223,29 @@ class GetBucketScore(GenericGET):
                 return Response({"success": True, "data": message})
 
             bucket_ids = [str(b.uuid) for b in buckets]
-            scores = bucket_score(bucket_ids)
+            bucket_scores = bucket_score(bucket_ids, scenario.uuid)
 
-            scores = get_gross_bucket_scores(scores)
+            # if no scores return 0
+            scores = []
+            if len(bucket_scores) == 0:
+                obj = {}
+                for bucket in buckets:
+                    obj["uuid"] = bucket.uuid
+                    obj["name"] = bucket.name
+                    obj["score"] = 0
+                    scores.append(obj)
+                return Response({"success": True,
+                                 "samples": len(scores),
+                                 "data": scores})
+
+            scores = get_gross_bucket_scores(bucket_scores)
 
             return Response({"success": True,
                              "samples": len(scores),
                              "data": scores})
 
-
         message = "user or scenario doesn't exist"
         return Response({"success": False, "message": message})
-
 
 
 class GetEntityBucketScore(GenericGET):
@@ -241,13 +267,35 @@ class GetEntityBucketScore(GenericGET):
             return Response({"success": False, "message": message})
 
         if user and scenario and entity:
-            entity_scores = entity_bucket_score(entity.uuid)
+
+            # get all buckets except the other model
+            buckets = Bucket.objects.filter(~Q(model_label = "other"),
+                                            scenarioID=str(scenario.uuid))
+
+            if len(list(buckets)) == 0:
+                message = "no buckets in this scenario"
+                return Response({"success": True, "data": message})
+
+            entity_scores = entity_bucket_score(entity.uuid, scenario.uuid)
+
+            # if no scores return 0
+            scores = []
+            if len(entity_scores) == 0:
+                obj = {}
+                for bucket in buckets:
+                    obj["uuid"] = bucket.uuid
+                    obj["name"] = bucket.name
+                    obj["score"] = 0
+                    scores.append(obj)
+                return Response({"success": True,
+                                 "samples": len(scores),
+                                 "data": scores})
+
             scores = get_gross_bucket_scores(entity_scores)
 
             return Response({"success": True,
                              "samples": len(scores),
                              "data": scores})
-
 
         message = "user or scenario or entity doesn't exist"
         return Response({"success": False, "message": message})

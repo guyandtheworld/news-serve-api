@@ -71,6 +71,8 @@ def get_gross_bucket_scores(bucket_scores):
 
     bucket_scores["score"] *= 100
     bucket_scores["score"] = bucket_scores["score"].apply(lambda x: round(x, 2))
+
+    bucket_scores.rename(columns={'bucketID_id': 'uuid'}, inplace=True)
     return bucket_scores.to_dict('records')
 
 

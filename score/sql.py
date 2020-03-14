@@ -17,7 +17,23 @@ def dictfetchall(cursor):
     ]
 
 
-def portfolio_score(entity_ids):
+def get_latest_model_uuid(scenario):
+    """
+    fetch the latest version of model for the given scenario
+    """
+    # include scenario here
+    query = """
+    select uuid from apis_modeldetail am where
+    "version"=(select max("version") from apis_modeldetail where "scenarioID_id"='{}')
+    """.format(scenario)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        row = cursor.fetchone()
+    return "'{}'".format(str(row[0]))
+
+
+def portfolio_score(entity_ids, scenario_id):
     """
     Returns GrossScore, bucket and timedelta from published date for
     aggregate GrossScore creation where bucket is other
@@ -25,6 +41,8 @@ def portfolio_score(entity_ids):
 
     entity_ids = "', '".join(entity_ids)
     entity_ids = "('{}')".format(entity_ids)
+
+    model_id = get_latest_model_uuid(scenario_id)
 
     query = """
             select ae."entityID_id"::text, entty."name", "bucketID_id"::text, "grossScore",
@@ -39,8 +57,9 @@ def portfolio_score(entity_ids):
             on ae."entityID_id" = entty.uuid
             where ae."entityID_id" in {}
             and model_label != 'other'
+            and "modelID_id" = {}
             and published_date > %s
-            """.format(entity_ids)
+            """.format(entity_ids, model_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [START_DATE])
@@ -48,7 +67,7 @@ def portfolio_score(entity_ids):
     return rows
 
 
-def bucket_score(bucket_ids):
+def bucket_score(bucket_ids, scenario_id):
     """
     Returns GrossScore for each Bucket, bucket and timedelta
     from published date for aggregate GrossScore creation
@@ -57,6 +76,8 @@ def bucket_score(bucket_ids):
 
     bucket_ids = "', '".join(bucket_ids)
     bucket_ids = "('{}')".format(bucket_ids)
+
+    model_id = get_latest_model_uuid(scenario_id)
 
     query = """
             select bckt."name", "bucketID_id"::text, "grossScore",
@@ -68,8 +89,9 @@ def bucket_score(bucket_ids):
             inner join apis_bucket bckt
             on ae."bucketID_id" = bckt.uuid
             where "bucketID_id" in {}
+            and "modelID_id" = {}
             and published_date > %s
-            """.format(bucket_ids)
+            """.format(bucket_ids, model_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [START_DATE])
@@ -77,11 +99,13 @@ def bucket_score(bucket_ids):
     return rows
 
 
-def entity_bucket_score(entity_id):
+def entity_bucket_score(entity_id, scenario_id):
     """
     Returns GrossScore, bucket and timedelta for
     a given entity
     """
+
+    model_id = get_latest_model_uuid(scenario_id)
 
     query = """
             select bckt."name", "bucketID_id"::text, "grossScore",
@@ -95,15 +119,15 @@ def entity_bucket_score(entity_id):
             inner join apis_entity entty
             on ae."entityID_id" = entty.uuid
             where ae."entityID_id" = %s
+            and "modelID_id" = {}
             and model_label != 'other'
             and published_date > %s
-            """
+            """.format(model_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [entity_id, START_DATE])
         rows = dictfetchall(cursor)
     return rows
-
 
 
 def portfolio_count(entity_ids):
