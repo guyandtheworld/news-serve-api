@@ -153,7 +153,7 @@ class GetBucket(GenericGET):
 
             entity_ids = [str(c.uuid) for c in portfolio]
 
-            stories = user_bucket(bucket.uuid, entity_ids)
+            stories = user_bucket(bucket.uuid, entity_ids, bucket.scenarioID.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"
@@ -191,7 +191,7 @@ class GetBucketEntity(GenericGET):
                 message = "this entity is not tracked under this scenario'"
                 return Response({"success": False, "message": message})
 
-            stories = user_entity_bucket(bucket.uuid, entity.uuid)
+            stories = user_entity_bucket(bucket.uuid, entity.uuid, bucket.scenarioID.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"
