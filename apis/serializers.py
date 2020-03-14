@@ -34,17 +34,20 @@ class AliasSerializer(ModelSerializer):
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'username',
+        fields = ('first_name', 'last_name',
                   'email', 'password')
 
 
 class DashUserSerializer(ModelSerializer):
     class Meta:
         model = DashUser
-        fields = ["user", "status", "clientID", "defaultScenario"]
+        fields = ["status", "clientID", "defaultScenario"]
 
 
 class AuthCustomTokenSerializer(serializers.Serializer):
+    """
+    used for logging in with email
+    """
     email_or_username = serializers.CharField()
     password = serializers.CharField()
 
