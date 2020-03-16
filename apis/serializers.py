@@ -8,7 +8,8 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
 from .models.entity import Entity, Alias
-from .models.users import DashUser
+from .models.scenario import Scenario
+from .models.users import DashUser, Client
 
 
 def validateEmail(email):
@@ -23,6 +24,18 @@ class EntitySerializer(ModelSerializer):
     class Meta:
         model = Entity
         exclude = ["uuid"]
+
+
+class ScenarioSerializer(ModelSerializer):
+    class Meta:
+        model = Scenario
+        fields = "__all__"
+
+
+class ClientSerializer(ModelSerializer):
+    class Meta:
+        model = Client
+        fields = "__all__"
 
 
 class AliasSerializer(ModelSerializer):

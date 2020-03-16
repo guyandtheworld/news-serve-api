@@ -21,8 +21,9 @@ from .models.scenario import (
 )
 
 from .models.users import DashUser, Client
-from .serializers import (EntitySerializer, AliasSerializer, UserSerializer, \
-                          DashUserSerializer, AuthCustomTokenSerializer)
+from .serializers import (EntitySerializer, AliasSerializer, UserSerializer,
+                          DashUserSerializer, AuthCustomTokenSerializer,
+                          ScenarioSerializer, ClientSerializer)
 
 
 class GenericGET(views.APIView):
@@ -239,3 +240,25 @@ class AddAlias(CreateAPIView):
             return Response(
                 {"success": True, "alias_uuid": alias_uuid}
             )
+
+
+class ListAllScenario(views.APIView):
+    def get(self, request, format=None):
+        data = Scenario.objects.filter(status="active")
+        serializer = ScenarioSerializer(data, many=True)
+        if data:
+            return Response(
+                {"success": True, "result": serializer.data}
+            )
+        return Response({"success": False})
+
+
+class ListAllClients(views.APIView):
+    def get(self, request, format=None):
+        data = Client.objects.all()
+        serializer = ClientSerializer(data, many=True)
+        if data:
+            return Response(
+                {"success": True, "result": serializer.data}
+            )
+        return Response({"success": False})
