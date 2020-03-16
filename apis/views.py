@@ -1,5 +1,6 @@
 import json
 
+from datetime import datetime, timedelta
 from django.core import serializers
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
@@ -23,7 +24,8 @@ from .models.scenario import (
 from .models.users import DashUser, Client
 from .serializers import (EntitySerializer, AliasSerializer, UserSerializer,
                           DashUserSerializer, AuthCustomTokenSerializer,
-                          ScenarioSerializer, ClientSerializer)
+                          ScenarioSerializer, ClientSerializer,
+                          BucketSerializer)
 
 
 class GenericGET(views.APIView):
@@ -157,7 +159,12 @@ class GetUserStatus(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
-            return Response({"success": True, "status": data.status})
+            expired = datetime.date((datetime.now() - timedelta(days=30))) > data.setupDate
+            return Response({"success": True,
+                             "status": data.status,
+                             "date": data.setupDate,
+                             "expired": expired
+                             })
         return Response({"success": False})
 
 
@@ -168,7 +175,8 @@ class GetUserDefaultScenario(GenericGET):
             return Response(
                 {
                     "success": True,
-                    "result": serializers.serialize("json", [data.defaultScenario]),
+                    "scenario": data.defaultScenario.name,
+                    "scenario_uuid": data.defaultScenario.uuid
                 }
             )
         return Response({"success": False})
@@ -186,12 +194,13 @@ class GetScenarioName(GenericGET):
 class GetBuckets(GenericGET):
     def post(self, request):
         data = self.getManyObjectsFromPOST(
-            request, "uuid", "scenarioID", Bucket)
+            request, "scenario_uuid", "scenarioID", Bucket)
         if data:
-            return Response(
-                {"success": True, "result": serializers.serialize(
-                    "json", data)}
-            )
+            serializer = BucketSerializer(data, many=True)
+            if data:
+                return Response(
+                    {"success": True, "result": serializer.data}
+                )
         return Response({"success": False})
 
 

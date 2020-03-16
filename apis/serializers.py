@@ -8,7 +8,7 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
 from .models.entity import Entity, Alias
-from .models.scenario import Scenario
+from .models.scenario import Scenario, Bucket
 from .models.users import DashUser, Client
 
 
@@ -29,6 +29,12 @@ class EntitySerializer(ModelSerializer):
 class ScenarioSerializer(ModelSerializer):
     class Meta:
         model = Scenario
+        fields = "__all__"
+
+
+class BucketSerializer(ModelSerializer):
+    class Meta:
+        model = Bucket
         fields = "__all__"
 
 
