@@ -15,6 +15,7 @@ class Entity(models.Model):
     wikiResource = models.CharField(max_length=100, blank=True)
     historyProcessed = models.BooleanField(default=False)
     entityType = models.CharField(max_length=100)
+    entryVerified = models.BooleanField(default=False)
     manualEntry = models.BooleanField(default=False)
 
     def __str__(self):
