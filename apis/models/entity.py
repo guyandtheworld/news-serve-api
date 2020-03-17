@@ -75,9 +75,7 @@ class StoryEntityRef(models.Model):
 class StoryEntityMap(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
-    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE, null=True, blank=True)
-    storyEntityID = models.ForeignKey("StoryEntityRef",
-                                      on_delete=models.CASCADE, null=True, blank=True)
+    entityID = models.ForeignKey("StoryEntityRef", on_delete=models.CASCADE)
     storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
 
 

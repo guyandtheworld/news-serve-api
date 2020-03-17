@@ -20,12 +20,6 @@ def validateEmail(email):
     return True
 
 
-class EntitySerializer(ModelSerializer):
-    class Meta:
-        model = Entity
-        exclude = ["uuid"]
-
-
 class ScenarioSerializer(ModelSerializer):
     class Meta:
         model = Scenario
@@ -42,12 +36,6 @@ class ClientSerializer(ModelSerializer):
     class Meta:
         model = Client
         fields = "__all__"
-
-
-class AliasSerializer(ModelSerializer):
-    class Meta:
-        model = Alias
-        exclude = ["uuid"]
 
 
 class UserSerializer(ModelSerializer):

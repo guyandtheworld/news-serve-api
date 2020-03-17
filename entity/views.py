@@ -9,7 +9,7 @@ from apis.models.users import DashUser, Portfolio
 from apis.models.entity import Entity, Alias
 from apis.models.scenario import Scenario
 from .utils import get_anchors, get_alias
-from .serializers import EntitySerializer
+from .serializers import EntitySerializer, EntityListSerializer, AliasSerializer
 
 
 class AddEntityInfo(views.APIView):
@@ -59,14 +59,14 @@ class ListPortfolio(views.APIView):
         if len(portfolio) > 0:
             # fetch entity objects in portfolio
             entities = [en.entityID for en in portfolio]
-            serializer = EntitySerializer(entities, many=True)
+            serializer = EntityListSerializer(entities, many=True)
             return Response({"success": True, "length": len(entities),
                              "data": serializer.data})
         msg = "no entities in the portfolio"
         return Response({"success": False, "data": msg})
 
 
-class ListAllEntitiesInScenario(views.APIView):
+class ListScenarioEntities(views.APIView):
     """
     List all Entities and Aliases being Tracked in a Scenario
     """
@@ -79,7 +79,7 @@ class ListAllEntitiesInScenario(views.APIView):
 
         if len(entities) > 0:
             # fetch entity objects in portfolio
-            serializer = EntitySerializer(entities, many=True)
+            serializer = EntityListSerializer(entities, many=True)
             return Response({"success": True, "length": len(entities),
                              "data": serializer.data})
         msg = "no entities in the scenario"
@@ -104,9 +104,36 @@ class AddToPortfolio(views.APIView):
     pass
 
 
-class CreateEntity(views.APIView):
+class AddEntity(views.APIView):
     """
-    Create Entity with Alias for a Particular Scenario
-    and adds it to the Portfolio of the User
+    End-point to create entity.
     """
-    pass
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        entity_serializer = EntitySerializer(data=request.data)
+        if entity_serializer.is_valid():
+            entity = entity_serializer.save()
+            return Response(
+                {"success": True, "entity_uuid": entity.uuid}
+            )
+
+
+class AddAlias(views.APIView):
+    """
+    Create Alias - You can add multiple Aliases
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        alias_serializer = AliasSerializer(data=request.data, many=True)
+        if alias_serializer.is_valid():
+            alias = alias_serializer.save()
+            alias_uuid = []
+            for obj in alias:
+                alias_uuid.append(obj.uuid)
+            return Response(
+                {"success": True, "alias_uuid": alias_uuid}
+            )
