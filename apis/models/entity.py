@@ -62,3 +62,25 @@ class ScrapeSource(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class StoryEntityRef(models.Model):
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=200)
+    typeID = models.ForeignKey("EntityType", on_delete=models.CASCADE)
+
+
+class StoryEntityMap(models.Model):
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE, null=True, blank=True)
+    storyEntityID = models.ForeignKey("StoryEntityRef",
+                                      on_delete=models.CASCADE, null=True, blank=True)
+    storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
+
+
+class EntityType(models.Model):
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100)

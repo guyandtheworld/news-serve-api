@@ -55,14 +55,33 @@ class GenericGET(views.APIView):
         return False
 
 
-class GetUserUUID(ObtainAuthToken):
-    def post(self, request, *args, **kwargs):
-        response = super(GetUserUUID, self).post(
-            request, *args, **kwargs)
-        token = Token.objects.get(key=response.data['token'])
+class GetUserUUID(views.APIView):
+    """
+    get uuid by using email and password
+    """
+    throttle_classes = ()
+    permission_classes = ()
+    parser_classes = (
+        parsers.FormParser,
+        parsers.MultiPartParser,
+        parsers.JSONParser,
+    )
+
+    renderer_classes = (renderers.JSONRenderer,)
+
+    def post(self, request):
+        serializer = AuthCustomTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+
         dash_user = DashUser.objects.filter(
-            **{"user__id": token.user_id}).first()
-        return Response({'uuid': dash_user.uuid})
+            **{"user__id": user.id}).first()
+
+        content = {
+            'user': dash_user.uuid,
+        }
+
+        return Response(content)
 
 
 class SignUp(CreateAPIView):
