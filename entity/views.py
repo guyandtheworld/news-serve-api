@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from apis.models.users import DashUser, Portfolio
 from apis.models.entity import Entity, Alias
+from apis.models.scenario import Scenario
 from .utils import get_anchors, get_alias
 from .serializers import EntitySerializer
 
@@ -54,11 +55,13 @@ class ListPortfolio(views.APIView):
     def post(self, request):
         user = get_object_or_404(DashUser, uuid=request.data["user"])
         portfolio = Portfolio.objects.filter(userID=user)
+
         if len(portfolio) > 0:
             # fetch entity objects in portfolio
             entities = [en.entityID for en in portfolio]
             serializer = EntitySerializer(entities, many=True)
-            return Response({"success": True, "data": serializer.data})
+            return Response({"success": True, "length": len(entities),
+                             "data": serializer.data})
         msg = "no entities in the portfolio"
         return Response({"success": False, "data": msg})
 
@@ -67,17 +70,21 @@ class ListAllEntitiesInScenario(views.APIView):
     """
     List all Entities and Aliases being Tracked in a Scenario
     """
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    # def post(self, request):
-    #     entity_serializer = EntitySerializer(data=request.data, many=True))
-    #     if entity_serializer.is_valid():
-    #         entity = entity_serializer.save()
-    #         return Response(
-    #             {"success": True, "entity_uuid": entity.uuid}
-    #         )
-    pass
+    def post(self, request):
+        scenario = get_object_or_404(Scenario, uuid=request.data["scenario"])
+        entities = Entity.objects.filter(scenarioID=scenario)
+
+        if len(entities) > 0:
+            # fetch entity objects in portfolio
+            serializer = EntitySerializer(entities, many=True)
+            return Response({"success": True, "length": len(entities),
+                             "data": serializer.data})
+        msg = "no entities in the scenario"
+        return Response({"success": False, "data": msg})
+
 
 
 class AddToPortfolio(views.APIView):

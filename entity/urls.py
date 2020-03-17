@@ -5,5 +5,6 @@ from . import views
 urlpatterns = [
     path("info", views.AddEntityInfo.as_view()),
     path("alias", views.AddEntityAlias.as_view()),
-    path("portfolio", views.ListPortfolio.as_view())
+    path("portfolio", views.ListPortfolio.as_view()),
+    path("listallentitiesinscenario", views.ListAllEntitiesInScenario.as_view())
 ]
