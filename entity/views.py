@@ -4,7 +4,6 @@ from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import CreateAPIView
 
 from apis.models.users import DashUser, Portfolio
 from apis.models.entity import Entity
@@ -60,12 +59,22 @@ class ListPortfolio(views.APIView):
         user = get_object_or_404(DashUser, uuid=request.data["user"])
         portfolio = Portfolio.objects.filter(userID=user)
 
+        portfolio_ids = {}
+        for p in portfolio:
+            portfolio_ids[str(p.entityID.uuid)] = str(p.uuid)
+
         if len(portfolio) > 0:
             # fetch entity objects in portfolio
             entities = [en.entityID for en in portfolio]
             serializer = EntityListSerializer(entities, many=True)
+            data = serializer.data
+
+            # adds portfolio id to the serialized data
+            # i didn't have time to learn how to serialize this
+            for i in range(len(data)):
+                data[i]['portfolio_id'] = portfolio_ids[data[i]["uuid"]]
             return Response({"success": True, "length": len(entities),
-                             "data": serializer.data})
+                             "data": data})
         msg = "no entities in the portfolio"
         return Response({"success": False, "data": msg})
 
@@ -108,8 +117,10 @@ class AddToPortfolio(views.APIView):
         return Response({"success": False, "data": msg})
 
     def delete(self, request):
-        portfolio = Portfolio.objects.get(uuid=request.data["portfolio"])
-        portfolio.delete()
+        portfolio_ids = request.data["portfolio_ids"]
+        for portfolio_id in portfolio_ids:
+            portfolio = Portfolio.objects.get(uuid=portfolio_id)
+            portfolio.delete()
         return Response(
             {"success": True}
         )

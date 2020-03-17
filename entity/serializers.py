@@ -24,7 +24,8 @@ class PortfolioListSerializer(ModelSerializer):
 
     class Meta:
         model = Portfolio
-        fields = "__all__"
+        fields = [field.name for field in model._meta.fields]
+        fields.append('entities')
 
 
 class EntitySerializer(ModelSerializer):
