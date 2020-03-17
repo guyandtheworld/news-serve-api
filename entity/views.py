@@ -4,12 +4,16 @@ from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import CreateAPIView
 
 from apis.models.users import DashUser, Portfolio
-from apis.models.entity import Entity, Alias
+from apis.models.entity import Entity
 from apis.models.scenario import Scenario
 from .utils import get_anchors, get_alias
-from .serializers import EntitySerializer, EntityListSerializer, AliasSerializer
+from .serializers import (EntitySerializer,
+                          EntityListSerializer,
+                          AliasSerializer,
+                          PortfolioSerializer)
 
 
 class AddEntityInfo(views.APIView):
@@ -86,22 +90,29 @@ class ListScenarioEntities(views.APIView):
         return Response({"success": False, "data": msg})
 
 
-
 class AddToPortfolio(views.APIView):
     """
-    Add an Entity to the Portfolio of a User
+    Add Entity (multiple) to the Portfolio of a User
     """
-    # authentication_classes = [TokenAuthentication]
-    # permission_classes = [IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
-    # def post(self, request):
-    #     entity_serializer = EntitySerializer(data=request.data, many=True))
-    #     if entity_serializer.is_valid():
-    #         entity = entity_serializer.save()
-    #         return Response(
-    #             {"success": True, "entity_uuid": entity.uuid}
-    #         )
-    pass
+    def post(self, request):
+        portfolio_serializer = PortfolioSerializer(data=request.data)
+        if portfolio_serializer.is_valid():
+            portfolio = portfolio_serializer.save()
+            return Response(
+                {"success": True, "portfolio_id": portfolio.uuid}
+            )
+        msg = "no given user or scenario or entity exists"
+        return Response({"success": False, "data": msg})
+
+    def delete(self, request):
+        portfolio = Portfolio.objects.get(uuid=request.data["portfolio"])
+        portfolio.delete()
+        return Response(
+            {"success": True}
+        )
 
 
 class AddEntity(views.APIView):
@@ -118,6 +129,8 @@ class AddEntity(views.APIView):
             return Response(
                 {"success": True, "entity_uuid": entity.uuid}
             )
+        msg = "no given user or scenario or entity exists"
+        return Response({"success": False, "data": msg})
 
 
 class AddAlias(views.APIView):
@@ -137,3 +150,5 @@ class AddAlias(views.APIView):
             return Response(
                 {"success": True, "alias_uuid": alias_uuid}
             )
+        msg = "no given user or scenario or entity exists"
+        return Response({"success": False, "data": msg})

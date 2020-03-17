@@ -46,7 +46,8 @@ class Portfolio(models.Model):
                             editable=False)
     userID = models.ForeignKey("DashUser", on_delete=models.CASCADE)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
-    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
+    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE,
+                                 related_name="entities")
 
     def __str__(self):
         return "{} - {} - {}".format(self.userID.user.username,

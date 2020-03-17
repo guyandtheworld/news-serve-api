@@ -1,6 +1,7 @@
 from rest_framework.serializers import ModelSerializer
 
 from apis.models.entity import Entity, Alias
+from apis.models.users import Portfolio
 
 
 class AliasListSerializer(ModelSerializer):
@@ -18,6 +19,14 @@ class EntityListSerializer(ModelSerializer):
         fields.append('alias')
 
 
+class PortfolioListSerializer(ModelSerializer):
+    entities = EntityListSerializer(many=True)
+
+    class Meta:
+        model = Portfolio
+        fields = "__all__"
+
+
 class EntitySerializer(ModelSerializer):
     class Meta:
         model = Entity
@@ -27,4 +36,10 @@ class EntitySerializer(ModelSerializer):
 class AliasSerializer(ModelSerializer):
     class Meta:
         model = Alias
+        exclude = ["uuid"]
+
+
+class PortfolioSerializer(ModelSerializer):
+    class Meta:
+        model = Portfolio
         exclude = ["uuid"]

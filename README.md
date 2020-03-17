@@ -54,6 +54,15 @@ Content-Type: application/json
 * use cloudflare for HTTPS serving
 * disable CORS
 
+### Database
+
+
+Read only access.
+
+`GRANT SELECT ON ALL TABLES IN SCHEMA public TO xxx;`
+`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO xxx;`
+
+
 ### Resources
 * [DRF Prod](https://dragonprogrammer.com/django-drf-api-production-docker/)
 * [Understanding uwsgi, threads, processes, and GIL](https://www.reddit.com/r/Python/comments/4s40ge/understanding_uwsgi_threads_processes_and_gil/)
