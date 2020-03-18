@@ -15,7 +15,7 @@ from .serializers import (EntitySerializer,
                           PortfolioSerializer)
 
 
-class AddEntityInfo(views.APIView):
+class EntityInfo(views.APIView):
     """
     Add anchor information to a Particular Entity
     * Wikipedia
@@ -33,7 +33,7 @@ class AddEntityInfo(views.APIView):
         return Response({"success": False})
 
 
-class AddEntityAlias(views.APIView):
+class EntityAlias(views.APIView):
     """
     Auto-fetch Alias for an Entity from Dbpedia
     """
@@ -57,7 +57,8 @@ class ListPortfolio(views.APIView):
 
     def post(self, request):
         user = get_object_or_404(DashUser, uuid=request.data["user"])
-        portfolio = Portfolio.objects.filter(userID=user)
+        scenario = get_object_or_404(Scenario, uuid=request.data["scenario"])
+        portfolio = Portfolio.objects.filter(userID=user, scenarioID=scenario)
 
         portfolio_ids = {}
         for p in portfolio:
@@ -107,14 +108,31 @@ class AddToPortfolio(views.APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        portfolio_serializer = PortfolioSerializer(data=request.data)
-        if portfolio_serializer.is_valid():
-            portfolio = portfolio_serializer.save()
-            return Response(
-                {"success": True, "portfolio_id": portfolio.uuid}
-            )
-        msg = "no given user or scenario or entity exists"
-        return Response({"success": False, "data": msg})
+
+        # if entity exists in portfolio, do not add
+        user = get_object_or_404(DashUser, uuid=request.data["user"])
+        scenario = get_object_or_404(Scenario,
+                                     uuid=request.data["scenario"])
+
+        portfolio = Portfolio.objects.filter(userID=user,
+                                             scenarioID=scenario)
+        entities = [en.entityID for en in portfolio]
+
+        portfolio_uuids = []
+        for entid in request.data["entity"]:
+            entity = get_object_or_404(Entity, uuid=entid)
+
+            # check if entity exists in portfolio
+            if entity not in entities:
+                obj = Portfolio.objects.create(userID=user,
+                                               scenarioID=scenario,
+                                               entityID=entity)
+                obj.save()
+                portfolio_uuids.append(obj.uuid)
+
+        return Response(
+            {"success": True, "portfolio_id": portfolio_uuids}
+        )
 
     def delete(self, request):
         portfolio_ids = request.data["portfolio_ids"]
@@ -136,10 +154,21 @@ class AddEntity(views.APIView):
     def post(self, request):
         entity_serializer = EntitySerializer(data=request.data)
         if entity_serializer.is_valid():
-            entity = entity_serializer.save()
-            return Response(
-                {"success": True, "entity_uuid": entity.uuid}
-            )
+
+            scenario = get_object_or_404(Scenario,
+                                         uuid=request.data["scenarioID"])
+            entity = Entity.objects.filter(scenarioID=scenario,
+                                           name=request.data["name"])
+
+            # if entity exists in database, just add it to portfolio
+            if entity:
+                msg = "given entity exists in database"
+                return Response({"success": False, "data": msg})
+            else:
+                entity = entity_serializer.save()
+                return Response(
+                    {"success": True, "entity_uuid": entity.uuid}
+                )
         msg = "no given user or scenario or entity exists"
         return Response({"success": False, "data": msg})
 
