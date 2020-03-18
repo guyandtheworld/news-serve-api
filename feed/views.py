@@ -17,9 +17,6 @@ class GenericGET(views.APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        return Response("Send POST request with JSON object with the correct key")
-
     def getSingleObjectFromPOST(self, request, key, column, ModelName):
         json_data = json.loads(request.body.decode("utf-8"))
         if key in json_data:
