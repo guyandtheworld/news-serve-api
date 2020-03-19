@@ -20,6 +20,9 @@ from .models.entity import (
     Alias,
     LastScrape,
     ScrapeSource,
+    StoryEntityRef,
+    StoryEntityMap,
+    EntityType
 )
 
 from .models.story import (
@@ -52,3 +55,6 @@ admin.site.register(EntityScore)
 admin.site.register(StoryBody)
 admin.site.register(StorySentiment)
 admin.site.register(StoryEntities)
+admin.site.register(StoryEntityRef)
+admin.site.register(StoryEntityMap)
+admin.site.register(EntityType)
