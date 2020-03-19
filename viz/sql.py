@@ -103,7 +103,7 @@ def sentiment_query(viz_type, uuid, scenario_id=None):
 
 def bucket_score_query(viz_type, uuid, scenario_id=None):
     """
-    query to fetch the sentiment per day of
+    query to fetch the bucket score per day of
     * an entity
     * a bucket with grossScore > .2
     """

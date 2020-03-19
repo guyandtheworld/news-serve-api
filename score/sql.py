@@ -30,7 +30,10 @@ def get_latest_model_uuid(scenario):
     with connection.cursor() as cursor:
         cursor.execute(query)
         row = cursor.fetchone()
-    return "'{}'".format(str(row[0]))
+    if row:
+        return "'{}'".format(str(row[0]))
+    else:
+        return False
 
 
 def portfolio_score(entity_ids, scenario_id):
@@ -43,6 +46,9 @@ def portfolio_score(entity_ids, scenario_id):
     entity_ids = "('{}')".format(entity_ids)
 
     model_id = get_latest_model_uuid(scenario_id)
+
+    if not model_id:
+        return ()
 
     query = """
             select ae."entityID_id"::text, entty."name", "bucketID_id"::text, "grossScore",
@@ -79,6 +85,9 @@ def bucket_score(bucket_ids, scenario_id):
 
     model_id = get_latest_model_uuid(scenario_id)
 
+    if not model_id:
+        return ()
+
     query = """
             select bckt."name", "bucketID_id"::text, "grossScore",
             extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
@@ -106,6 +115,9 @@ def entity_bucket_score(entity_id, scenario_id):
     """
 
     model_id = get_latest_model_uuid(scenario_id)
+
+    if not model_id:
+        return ()
 
     query = """
             select bckt."name", "bucketID_id"::text, "grossScore",
