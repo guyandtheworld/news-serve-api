@@ -101,7 +101,7 @@ def sentiment_query(viz_type, uuid, scenario_id=None):
     return rows
 
 
-def bucket_score_query(viz_type, uuid, scenario_id=None):
+def bucket_score_query(viz_type, bucket_id, entity_id=None, scenario_id=None):
     """
     query to fetch the bucket score per day of
     * an entity
@@ -109,24 +109,25 @@ def bucket_score_query(viz_type, uuid, scenario_id=None):
     """
 
     if viz_type == "entity":
+        model_id = get_latest_model_uuid(scenario_id)
         query = """
                 select published_date::date, sum("grossScore")/count(*)
                 as bucket_score from apis_entityscore ae
                 inner join apis_story sty on ae."storyID_id" = sty.uuid
-                where ae."entityID_id" = '26a20604-2586-45f5-ab5d-385b57dcc687'
-                and ae."modelID_id" = '436b050b-a4e9-4711-a058-722977e5f91e'
-                and ae."bucketID_id"='2fa858cf-f8c3-4fe8-bd02-ae66aae2b909'
+                where ae."entityID_id" = '{}'
+                and ae."modelID_id" = '{}'
+                and ae."bucketID_id"='{}'
                 group by 1 order by 1
-                """.format(uuid)
+                """.format(entity_id, model_id, bucket_id)
     elif viz_type == "bucket":
         model_id = get_latest_model_uuid(scenario_id)
         query = """
                 select "storyDate"::date, sum("grossScore")/count(*) as bucket_score
                 from apis_bucketscore ab
-                where ab."modelID_id" = '436b050b-a4e9-4711-a058-722977e5f91e'
-                and ab."bucketID_id"='2fa858cf-f8c3-4fe8-bd02-ae66aae2b909'
+                where ab."modelID_id" = '{}'
+                and ab."bucketID_id"='{}'
                 group by 1 order by 1
-                """.format(uuid, model_id)
+                """.format(model_id, bucket_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query)
