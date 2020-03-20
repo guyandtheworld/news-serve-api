@@ -25,7 +25,6 @@ class ScenarioSerializer(ModelSerializer):
         model = Scenario
         fields = "__all__"
 
-
 class BucketSerializer(ModelSerializer):
     class Meta:
         model = Bucket
