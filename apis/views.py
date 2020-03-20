@@ -90,8 +90,8 @@ class SignUp(CreateAPIView):
 
         if user_form.is_valid(raise_exception=True) and \
            dash_user_form.is_valid(raise_exception=True):
-
             email = user_form.data['email']
+
             if User.objects.filter(email=email).exists():
                 return Response({"error": "This email id already exists."})
 
