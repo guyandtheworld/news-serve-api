@@ -46,10 +46,18 @@ This repository contains all of the APIs which we serve to the end-user using ou
 
 ## Development
 
+### Before Starting Development
 
 * Before writing a new feature, checkout a new branch on git: `git checkout -b <BRANCH NAME>`
 * After writing and testing feature: `git add .` and `git commit -m "<PROPER COMMIT MESSAGE>"`
 * Push to YOUR BRANCH: `git push origin <BRANCH NAME>`. Never push to master. It will get deployed.
+
+### Updating your local branch
+
+Before any development, to ensure your branch is up-to-date with the master. You need to:
+* `git fetch origin` Get all changes in the remote repository
+* `git rebase origin/master` Make sure all changes in the remote is reflecting in your locally.
+
 
 We run our server in a docker-container. So each time you finish a feature. You need to run `docker-compose -f docker-compose-prod.yml up --build` and visit `http://localhost:8000/admin` to test if the API is working.
 
@@ -109,6 +117,12 @@ Our other apps are:
 * feed: contains queries and APIs for generating and scoring feeds
 * score: APIs and queries for generating scores for companies and buckets
 * viz: visualizations for different entities and buckets
+
+
+### After writing features
+- Run `docker-compose -f docker-compose-prod.yml up --build` for production
+- Go to `http://localhost:8000/`
+- Test with Insomnia if your API is working as intended. If it is, push to YOUR BRANCH.
 
 
 ### Making changes to database
