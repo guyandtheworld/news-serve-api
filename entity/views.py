@@ -17,10 +17,16 @@ from .serializers import (EntitySerializer,
 
 class EntityInfo(views.APIView):
     """
-    Add anchor information to a Particular Entity
+    # Add anchor information to a Particular Entity
     * Wikipedia
     * Dbpedia
     * LEI
+
+    # Format
+
+        {
+            "entity": "<company name>"
+        }
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -36,6 +42,12 @@ class EntityInfo(views.APIView):
 class EntityAlias(views.APIView):
     """
     Auto-fetch Alias for an Entity from Dbpedia
+
+    # Format
+
+    {
+        "entity": "<company name>"
+    }
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -51,6 +63,13 @@ class EntityAlias(views.APIView):
 class ListPortfolio(views.APIView):
     """
     List all Entities and Alias in the Portfolio of a Particular User
+
+    # Format
+
+    {
+        "user": "<USER UUID>",
+        "scenario": "<SCENARIO UUID>"
+    }
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -83,6 +102,12 @@ class ListPortfolio(views.APIView):
 class ListScenarioEntities(views.APIView):
     """
     List all Entities and Aliases being Tracked in a Scenario
+
+    # Format
+
+    {
+        "scenario": "<SCENARIO UUID>"
+    }
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -103,6 +128,12 @@ class ListScenarioEntities(views.APIView):
 class AddToPortfolio(views.APIView):
     """
     Add Entity (multiple) to the Portfolio of a User
+
+    {
+        "user": "<USER UUID>",
+        "scenario": "<SCENARIO UUID>",
+        "entity": [<ENTITY UUIDs>]
+    }
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -147,6 +178,17 @@ class AddToPortfolio(views.APIView):
 class AddEntity(views.APIView):
     """
     End-point to create entity.
+
+    # Format
+    {
+        "name": "CPC Corp",
+        "lei": "969500Y9EJECL9E0KM90",
+        "dbpediaResource": "http://dbpedia.org/page/Deloitte",
+        "wikiResource": "https://en.wikipedia.org/wiki/Deloitte",
+        "manualEntry": true,
+        "entityType": "company",
+        "scenarioID": "<SCENARIO UUID>"
+    }
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -176,6 +218,13 @@ class AddEntity(views.APIView):
 class AddAlias(views.APIView):
     """
     Create Alias - You can add multiple Aliases
+
+    # Format
+
+    [{
+	"name": "<ENTITY NAME>",
+	"entityID": "<ENTITY UUID>"
+    }]
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
