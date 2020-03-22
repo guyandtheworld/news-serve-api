@@ -61,7 +61,7 @@ def news_count_query(viz_type, uuid, scenario_id=None):
     return rows
 
 
-def sentiment_query(viz_type, uuid, scenario_id=None):
+def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None):
     """
     query to fetch the sentiment per day of
     * an entity
@@ -72,19 +72,19 @@ def sentiment_query(viz_type, uuid, scenario_id=None):
         query = """
                 select published_date::date,
                 sum(coalesce("sentiment", '0')::float)/count(*) as "sentiment" from
-                (select published_date, sentiment->'compound' as "sentiment" from
+                (select published_date, sentiment->'{}' as "sentiment" from
                 apis_story as2
                 inner join apis_storysentiment sent
                 on as2.uuid=sent."storyID_id"
                 where "entityID_id" = '{}') sem
                 group by 1 order by 1
-                """.format(uuid)
+                """.format(sentiment_type, uuid)
     elif viz_type == "bucket":
         model_id = get_latest_model_uuid(scenario_id)
         query = """
                 select published_date::date,
                 sum(coalesce("sentiment", '0')::float)/count(*) as "sentiment" from
-                (select published_date, sentiment->'compound' as "sentiment" from
+                (select published_date, sentiment->'{}' as "sentiment" from
                 apis_entityscore ae inner join apis_story sty
                 on ae."storyID_id" = sty.uuid
                 inner join apis_storysentiment sent
@@ -93,7 +93,7 @@ def sentiment_query(viz_type, uuid, scenario_id=None):
                 and ae."modelID_id" = '{}'
                 and ae."grossScore" > .2) snt
                 group by 1 order by 1
-                """.format(uuid, model_id)
+                """.format(sentiment_type, uuid, model_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query)
