@@ -1,4 +1,7 @@
 import json
+import pandas as pd
+
+from pprint import pprint
 
 from rest_framework import views
 from rest_framework.response import Response
@@ -10,7 +13,7 @@ from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
 from .utils import score_in_bulk
-from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket
+from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket,story_entities
 
 
 class GenericGET(views.APIView):
@@ -35,7 +38,18 @@ class GenericGET(views.APIView):
                 return False
             return obj
         return False
-
+    def getStoryEntities(self,processed_stories):
+        story_ids = [story['uuid'] for story in processed_stories]
+        story_ent = pd.DataFrame(story_entities(story_ids)).astype(str).set_index('uuid')
+        d = {}
+        for i in story_ent['storyID_id'].unique():
+            d[i] = story_ent[story_ent['storyID_id']==i].drop_duplicates(subset=['entityID_id']).to_dict('index')
+        for story in processed_stories:
+            try:
+                story['entities'] = d[story['uuid']]
+            except:
+                story['entities'] = {}
+        return processed_stories
 
 class GetPortfolio(GenericGET):
     """
@@ -78,7 +92,7 @@ class GetPortfolio(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories)
+            processed_stories = self.getStoryEntities(score_in_bulk(stories))
 
             return Response({"success": True,
                              "samples": len(processed_stories),
@@ -104,7 +118,8 @@ class GetEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories)
+            processed_stories = self.getStoryEntities(score_in_bulk(stories))
+
 
             return Response({"success": True,
                              "samples": len(processed_stories),
@@ -149,14 +164,13 @@ class GetBucket(GenericGET):
                 return Response({"success": True, "data": message})
 
             entity_ids = [str(c.uuid) for c in portfolio]
-
             stories = user_bucket(bucket.uuid, entity_ids, bucket.scenarioID.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories, bucket=True)
+            processed_stories = self.getStoryEntities(score_in_bulk(stories, bucket=True))
 
             return Response({"success": True,
                              "samples": len(processed_stories),
@@ -194,7 +208,7 @@ class GetBucketEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories, bucket=True)
+            processed_stories = self.getStoryEntities(score_in_bulk(stories, bucket=True))
 
             return Response({"success": True,
                              "samples": len(processed_stories),

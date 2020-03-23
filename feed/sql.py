@@ -11,15 +11,10 @@ EXTRA_INFO = """
             inner join apis_entity ent on stry."entityID_id" = ent.uuid
             inner join (select "storyID_id", body from apis_storybody) stry_bdy_tbl
             on stry_bdy_tbl."storyID_id" = stry.uuid
-            inner join
-            (select "storyID_id", entities from apis_storyentities where is_headline = true) title_entities
-            on title_entities."storyID_id" = stry.uuid
+
             inner join
             (select "storyID_id", sentiment from apis_storysentiment where is_headline = true) title_sntmnt
             on title_sntmnt."storyID_id" = stry.uuid
-            left join
-            (select "storyID_id", entities from apis_storyentities where is_headline = false) body_entities
-            on body_entities."storyID_id" = stry.uuid
             left join
             (select "storyID_id", sentiment from apis_storysentiment where is_headline = false) body_sentiment
             on body_sentiment."storyID_id" = stry.uuid
@@ -67,8 +62,7 @@ def user_portfolio(entity_ids):
     query = """
             select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
             published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
-            title_entities.entities as title_entities, title_sntmnt.sentiment as title_sentiment,
-            body_entities.entities as body_entities, body_sentiment.sentiment as body_sentiment
+            title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
             FROM public.apis_story as stry
             inner join
             (select * from apis_storybody as2 where status_code = 200) as stby
@@ -97,8 +91,7 @@ def user_entity(entity_id):
     query = """
             select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
             published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
-            title_entities.entities as title_entities, title_sntmnt.sentiment as title_sentiment,
-            body_entities.entities as body_entities, body_sentiment.sentiment as body_sentiment
+            title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
             FROM public.apis_story as stry
             inner join
             (select * from apis_storybody as2 where status_code = 200) as stby
@@ -128,8 +121,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id):
     query = """
             select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
             published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
-            "source", "grossScore", "sourceScore", title_entities.entities as title_entities,
-            title_sntmnt.sentiment as title_sentiment, body_entities.entities as body_entities,
+            "source", "grossScore", "sourceScore",title_sntmnt.sentiment as title_sentiment,
             body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
             inner join
             (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
@@ -164,8 +156,7 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id):
     query = """
             select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
             published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
-            "source", "grossScore", "sourceScore", title_entities.entities as title_entities,
-            title_sntmnt.sentiment as title_sentiment, body_entities.entities as body_entities,
+            "source", "grossScore", "sourceScore",title_sntmnt.sentiment as title_sentiment,
             body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
             inner join
             (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
@@ -180,5 +171,19 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id):
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date])
+        rows = dictfetchall(cursor)
+    return rows
+def story_entities(story_ids):
+    ids_str = "', '".join(story_ids)
+    story_ids = "('{}')".format(ids_str)
+    query = """
+        select sem.uuid,"storyID_id",name,type,"entityID_id" from apis_storyentitymap as sem
+        inner join apis_storyentityref as enref on sem."entityID_id" = enref.uuid
+        inner join (select name as type,uuid as type_id from apis_entitytype) as entype on enref."typeID_id" = entype.type_id
+        where "storyID_id" in {}
+        """.format(story_ids)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
         rows = dictfetchall(cursor)
     return rows
