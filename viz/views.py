@@ -47,7 +47,7 @@ class BucketScoreViz(views.APIView):
         bucket= get_object_or_404(Bucket, uuid=request.data['bucket_uuid'])
         scenario = get_object_or_404(Scenario,
                                             uuid=request.data['scenario_uuid'])
-        # viz for entities
+        # viz for entity and bucket
         if request.data["type"] == 'entity':
             entity = get_object_or_404(Entity,
                                        uuid=request.data["entity_uuid"])
@@ -55,7 +55,7 @@ class BucketScoreViz(views.APIView):
                                         bucket.uuid, entity.uuid,scenario.uuid)
             return Response({"success": True, "length": len(data),
                              "data": data})
-        # viz for bucket
+        # viz for just buckets
         if request.data["type"] == 'bucket':
             data = bucket_score_query("bucket",
                                         bucket.uuid, scenario_id=scenario.uuid)
