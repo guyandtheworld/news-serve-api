@@ -72,11 +72,14 @@ class GetUserUUID(views.APIView):
         dash_user = DashUser.objects.filter(
             **{"user__id": user.id}).first()
 
-        content = {
-            'user': dash_user.uuid,
-        }
-
-        return Response(content)
+        if dash_user:
+            content = {
+                'user': dash_user.uuid,
+            }
+            return Response(content)
+        else:
+            msg = "no dash user exists"
+            return Response({"success": False, "message": msg})
 
 
 class SignUp(CreateAPIView):
@@ -84,6 +87,9 @@ class SignUp(CreateAPIView):
     Validates the data and creates a new account for a person
     with corresponding Dash User
     """
+
+    serializer_class = UserSerializer
+
     def post(self, request, *args, **kwargs):
         user_form = UserSerializer(data=request.data)
         dash_user_form = DashUserSerializer(data=request.data)
