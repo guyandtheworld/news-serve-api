@@ -1,8 +1,6 @@
 import json
 import pandas as pd
 
-from pprint import pprint
-
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
@@ -41,14 +39,18 @@ class GenericGET(views.APIView):
     def getStoryEntities(self,processed_stories):
         story_ids = [story['uuid'] for story in processed_stories]
         story_ent = pd.DataFrame(story_entities(story_ids)).astype(str).set_index('uuid')
+
         d = {}
+
         for i in story_ent['storyID_id'].unique():
             d[i] = story_ent[story_ent['storyID_id']==i].drop_duplicates(subset=['entityID_id']).to_dict('index')
+
         for story in processed_stories:
             try:
                 story['entities'] = d[story['uuid']]
             except:
                 story['entities'] = {}
+
         return processed_stories
 
 class GetPortfolio(GenericGET):

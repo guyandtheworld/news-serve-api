@@ -176,6 +176,7 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id):
 def story_entities(story_ids):
     ids_str = "', '".join(story_ids)
     story_ids = "('{}')".format(ids_str)
+
     query = """
         select sem.uuid,"storyID_id",name,type,"entityID_id" from apis_storyentitymap as sem
         inner join apis_storyentityref as enref on sem."entityID_id" = enref.uuid
@@ -186,4 +187,5 @@ def story_entities(story_ids):
     with connection.cursor() as cursor:
         cursor.execute(query)
         rows = dictfetchall(cursor)
+        
     return rows
