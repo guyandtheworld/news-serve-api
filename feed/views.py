@@ -38,12 +38,12 @@ class GenericGET(views.APIView):
         return False
     def getStoryEntities(self,processed_stories):
         story_ids = [story['uuid'] for story in processed_stories]
-        story_ent = pd.DataFrame(story_entities(story_ids)).astype(str).set_index('uuid')
+        story_ent = pd.DataFrame(story_entities(story_ids)).astype(str)
 
         d = {}
 
         for i in story_ent['storyID_id'].unique():
-            d[i] = story_ent[story_ent['storyID_id']==i].drop_duplicates(subset=['entityID_id']).to_dict('index')
+            d[i] = story_ent[story_ent['storyID_id']==i].drop_duplicates(subset=['entityID_id']).to_dict('records')
 
         for story in processed_stories:
             try:
