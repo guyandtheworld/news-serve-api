@@ -4,6 +4,8 @@ import pandas as pd
 
 from datetime import datetime, timedelta
 
+from .sql import story_entities
+
 
 KEYWORD_SCORE = 30
 
@@ -88,3 +90,20 @@ def score_in_bulk(articles, bucket=False):
     result_sample['uuid'] = result_sample['uuid'].apply(str)
     result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
     return result_sample.to_dict(orient='records')
+
+def attach_story_entities(processed_stories):
+        story_ids = [story['uuid'] for story in processed_stories]
+        story_ent = pd.DataFrame(story_entities(story_ids)).astype(str)
+
+        d = {}
+
+        for i in story_ent['storyID_id'].unique():
+            d[i] = story_ent[story_ent['storyID_id']==i].drop_duplicates(subset=['entityID_id']).drop('storyID_id',axis=1).to_dict('records')
+
+        for story in processed_stories:
+            try:
+                story['entities'] = d[story['uuid']]
+            except:
+                story['entities'] = {}
+
+        return processed_stories
