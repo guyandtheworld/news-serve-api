@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apis.models.story import Story, StoryBody, StoryEntities, StorySentiment
+from apis.models.story import Story, StoryBody, StorySentiment
 
 
 class StoryBodySerializer(serializers.ModelSerializer):
@@ -8,14 +8,6 @@ class StoryBodySerializer(serializers.ModelSerializer):
     class Meta:
         model = StoryBody
         fields = ('body', 'story')
-
-
-class StoryEntitiesSerializer(serializers.ModelSerializer):
-    story = serializers.RelatedField(read_only=True)
-
-    class Meta:
-        model = StoryEntities
-        fields = ('is_headline', 'entities', 'story')
 
 
 class StorySentimentSerializer(serializers.ModelSerializer):
@@ -29,12 +21,10 @@ class StorySentimentSerializer(serializers.ModelSerializer):
 class StorySerializer(serializers.ModelSerializer):
 
     story_body = StoryBodySerializer(read_only=True, many=True)
-    story_entities = StoryEntitiesSerializer(read_only=True, many=True)
     story_sentiment = StorySentimentSerializer(read_only=True, many=True)
 
     class Meta:
         model = Story
         fields = [field.name for field in model._meta.fields]
         fields.append('story_body')
-        fields.append('story_entities')
         fields.append('story_sentiment')

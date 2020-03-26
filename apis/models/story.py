@@ -47,22 +47,6 @@ class StoryBody(models.Model):
         verbose_name_plural = "story bodies"
 
 
-class StoryEntities(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
-                            editable=False)
-    storyID = models.ForeignKey(
-        "Story", on_delete=models.CASCADE, related_name="story_entities")
-    is_headline = models.BooleanField()
-    entities = JSONField()
-    entryTime = models.DateTimeField()
-
-    def __str__(self):
-        return "{}".format(self.storyID.title)
-
-    class Meta:
-        verbose_name_plural = "story entities"
-
-
 class StorySentiment(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
