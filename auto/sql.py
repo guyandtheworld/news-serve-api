@@ -1,5 +1,6 @@
 from django.db import connection
 
+
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
@@ -8,10 +9,10 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
-def get_scenario_entity_count(scenario_id,type_id,n_entities):
 
+def get_scenario_entity_count(scenario_id, type_id, n_entities):
     """
-    returns list of a entities in a scenario ordered by count, filtered by type 
+    returns list of a entities in a scenario ordered by count, filtered by type
     if needed
     """
 
@@ -30,7 +31,8 @@ def get_scenario_entity_count(scenario_id,type_id,n_entities):
         type_filter = ""
 
     query = """
-    select "entityID_id",count(story_id) as count from apis_storyentitymap as entmap
+    select "entityID_id",count(story_id) as count from apis_storyentitymap
+    as entmap
     {}
     inner join
     (select uuid as story_id from apis_story as story
@@ -39,7 +41,7 @@ def get_scenario_entity_count(scenario_id,type_id,n_entities):
     group by "entityID_id"
     order by count DESC
     {}
-    """.format(type_filter,scenario_id,limit)
+    """.format(type_filter, scenario_id, limit)
 
     with connection.cursor() as cursor:
         cursor.execute(query)
