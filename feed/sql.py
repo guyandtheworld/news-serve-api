@@ -173,7 +173,14 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id):
         cursor.execute(query, [start_date])
         rows = dictfetchall(cursor)
     return rows
+
+
 def story_entities(story_ids):
+    """
+    takes a list of story ids and queries the apis_storyentitymap to find
+    the list of entities in thsoe stories
+    """
+
     ids_str = "', '".join(story_ids)
     story_ids = "('{}')".format(ids_str)
 
@@ -187,5 +194,5 @@ def story_entities(story_ids):
     with connection.cursor() as cursor:
         cursor.execute(query)
         rows = dictfetchall(cursor)
-        
+
     return rows

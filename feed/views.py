@@ -10,7 +10,7 @@ from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
-from .utils import score_in_bulk,attach_story_entities
+from .utils import score_in_bulk, attach_story_entities
 from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket
 
 
