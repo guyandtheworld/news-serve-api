@@ -2,7 +2,7 @@ from django.db import connection
 from datetime import datetime, timedelta
 
 
-PORTFOLIO_DAYS = 150
+PORTFOLIO_DAYS = 15
 
 # get entity name, and story body
 # get entities from title and body
