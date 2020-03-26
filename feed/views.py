@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 
 from rest_framework import views
 from rest_framework.response import Response
@@ -9,7 +10,7 @@ from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
 from apis.models.entity import Entity
 
-from .utils import score_in_bulk
+from .utils import score_in_bulk, attach_story_entities
 from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket
 
 
@@ -78,7 +79,7 @@ class GetPortfolio(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories)
+            processed_stories = attach_story_entities(score_in_bulk(stories))
 
             return Response({"success": True,
                              "samples": len(processed_stories),
@@ -104,7 +105,8 @@ class GetEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories)
+            processed_stories = attach_story_entities(score_in_bulk(stories))
+
 
             return Response({"success": True,
                              "samples": len(processed_stories),
@@ -149,14 +151,13 @@ class GetBucket(GenericGET):
                 return Response({"success": True, "data": message})
 
             entity_ids = [str(c.uuid) for c in portfolio]
-
             stories = user_bucket(bucket.uuid, entity_ids, bucket.scenarioID.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories, bucket=True)
+            processed_stories = attach_story_entities(score_in_bulk(stories, bucket=True))
 
             return Response({"success": True,
                              "samples": len(processed_stories),
@@ -194,7 +195,7 @@ class GetBucketEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = score_in_bulk(stories, bucket=True)
+            processed_stories = attach_story_entities(score_in_bulk(stories, bucket=True))
 
             return Response({"success": True,
                              "samples": len(processed_stories),

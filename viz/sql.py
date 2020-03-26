@@ -38,7 +38,7 @@ def news_count_query(viz_type, uuid, scenario_id=None):
 
     if viz_type == "entity":
         query = """
-                select published_date::date, count(*) from apis_story as2 
+                select published_date::date, count(*) from apis_story as2
                 where "entityID_id" = '{}'
                 group by 1 order by 1
                 """.format(uuid)
