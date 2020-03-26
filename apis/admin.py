@@ -30,7 +30,6 @@ from .models.story import (
     BucketScore,
     EntityScore,
     StoryBody,
-    StoryEntities,
     StorySentiment
 )
 
@@ -54,7 +53,6 @@ admin.site.register(BucketScore)
 admin.site.register(EntityScore)
 admin.site.register(StoryBody)
 admin.site.register(StorySentiment)
-admin.site.register(StoryEntities)
 admin.site.register(StoryEntityRef)
 admin.site.register(StoryEntityMap)
 admin.site.register(EntityType)
