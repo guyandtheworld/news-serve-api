@@ -27,5 +27,7 @@ urlpatterns = [
     path("api/v1/feed/", include("feed.urls")),
     path("api/v1/score/", include("score.urls")),
     path("api/v1/entity/", include("entity.urls")),
-    path("api/v1/viz/", include("viz.urls"))
+    path("api/v1/viz/", include("viz.urls")),
+    path("api/v1/auto/", include("auto.urls"))
+
     ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     "feed",
     "score",
     "entity",
-    "viz"
+    "viz",
+    "auto"
 ]
 
 MIDDLEWARE = [
