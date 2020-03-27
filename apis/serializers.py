@@ -7,7 +7,6 @@ from django.core.validators import validate_email
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-from .models.entity import Entity, Alias
 from .models.scenario import Scenario, Bucket
 from .models.users import DashUser, Client
 
@@ -24,6 +23,7 @@ class ScenarioSerializer(ModelSerializer):
     class Meta:
         model = Scenario
         fields = "__all__"
+
 
 class BucketSerializer(ModelSerializer):
     class Meta:

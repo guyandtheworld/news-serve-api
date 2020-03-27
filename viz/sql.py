@@ -1,5 +1,4 @@
 from django.db import connection
-from datetime import datetime, timedelta
 
 
 PORTFOLIO_DAYS = 150

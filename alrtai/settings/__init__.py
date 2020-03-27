@@ -1,7 +1,7 @@
 import os
-from .common import *
+from .common import *  # noqa
 
 if os.environ['DJANGO_SETTINGS'] == 'prod':
-   from .prod import *
+    from .prod import *  # noqa
 else:
-   from .dev import *
+    from .dev import *  # noqa

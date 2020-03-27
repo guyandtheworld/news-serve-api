@@ -57,7 +57,6 @@ class GetPortfolioScore(GenericGET):
             message = "user is not subscribed to the scenario"
             return Response({"success": False, "message": message})
 
-
         if user and scenario:
             query = """
                         select * from public.apis_entity as2 where uuid in
@@ -129,7 +128,6 @@ class GetSentiment(GenericGET):
             portfolio = Entity.objects.raw(
                 query.format(user.uuid, scenario.uuid))
 
-
             portfolio = [c for c in portfolio]
 
             if len(portfolio) == 0:
@@ -176,7 +174,6 @@ class GetNewsCount(GenericGET):
             portfolio = Entity.objects.raw(
                 query.format(user.uuid, scenario.uuid))
 
-
             portfolio = [c for c in portfolio]
 
             if len(portfolio) == 0:
@@ -212,7 +209,7 @@ class GetBucketScore(GenericGET):
         if user and scenario:
 
             # get all buckets except the other model
-            buckets = Bucket.objects.filter(~Q(model_label = "other"),
+            buckets = Bucket.objects.filter(~Q(model_label="other"),
                                             scenarioID=str(scenario.uuid))
 
             if len(list(buckets)) == 0:
@@ -257,7 +254,6 @@ class GetEntityBucketScore(GenericGET):
         entity = self.getSingleObjectFromPOST(
             request, "entity", "uuid", Entity)
 
-
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
             message = "user is not subscribed to the scenario"
@@ -266,7 +262,7 @@ class GetEntityBucketScore(GenericGET):
         if user and scenario and entity:
 
             # get all buckets except the other model
-            buckets = Bucket.objects.filter(~Q(model_label = "other"),
+            buckets = Bucket.objects.filter(~Q(model_label="other"),
                                             scenarioID=str(scenario.uuid))
 
             if len(list(buckets)) == 0:

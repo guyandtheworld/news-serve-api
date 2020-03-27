@@ -102,16 +102,16 @@ class SignUp(CreateAPIView):
                 return Response({"error": "This email id already exists."})
 
             user_obj = User.objects.create_user(
-                        first_name=user_form.data['first_name'],
-                        last_name=user_form.data['last_name'],
-                        username=user_form.data['email'],
-                        email=user_form.data['email'],
-                        password=user_form.data['password'])
+                first_name=user_form.data['first_name'],
+                last_name=user_form.data['last_name'],
+                username=user_form.data['email'],
+                email=user_form.data['email'],
+                password=user_form.data['password'])
 
             client = get_object_or_404(Client,
-                        uuid=dash_user_form.data['clientID'])
+                                       uuid=dash_user_form.data['clientID'])
             scenario = get_object_or_404(Scenario,
-                        uuid=dash_user_form.data['defaultScenario'])
+                                         uuid=dash_user_form.data['defaultScenario'])
 
             dash_user_obj = DashUser.objects.create(
                 user=user_obj,
@@ -179,7 +179,8 @@ class GetUserStatus(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
-            expired = datetime.date((datetime.now() - timedelta(days=30))) > data.setupDate
+            expired = datetime.date(
+                (datetime.now() - timedelta(days=30))) > data.setupDate
             return Response({"success": True,
                              "status": data.status,
                              "date": data.setupDate,
