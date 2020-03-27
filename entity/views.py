@@ -11,8 +11,7 @@ from apis.models.scenario import Scenario
 from .utils import get_anchors, get_alias
 from .serializers import (EntitySerializer,
                           EntityListSerializer,
-                          AliasSerializer,
-                          PortfolioSerializer)
+                          AliasSerializer)
 
 
 class EntityInfo(views.APIView):
@@ -222,8 +221,8 @@ class AddAlias(views.APIView):
     # Format
 
     [{
-	"name": "<ENTITY NAME>",
-	"entityID": "<ENTITY UUID>"
+        "name": "<ENTITY NAME>",
+        "entityID": "<ENTITY UUID>"
     }]
     """
     authentication_classes = [TokenAuthentication]

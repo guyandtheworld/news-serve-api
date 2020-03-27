@@ -2,7 +2,7 @@ import math
 
 import pandas as pd
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from .sql import story_entities
 
@@ -25,7 +25,7 @@ def presence_score(keyword, text, analytics_type):
     score = similarity(keyword, text)
 
     if analytics_type == 'title':
-        return score*2
+        return score * 2
     else:
         return score
 
@@ -40,7 +40,7 @@ def hotness(article, bucket=False):
     keyword = article["search_keyword"]
 
     # negative news
-    s = -s*100
+    s = -s * 100
 
     # presence of keyword in title
     s += presence_score(keyword.lower(), article["title"].lower(), "title")
@@ -62,7 +62,7 @@ def hotness(article, bucket=False):
 
     if (timeDiff >= 1):
         x = timeDiff - 1
-        baseScore = baseScore * math.exp(-.2*x*x)
+        baseScore = baseScore * math.exp(-.2 * x * x)
 
     return baseScore
 

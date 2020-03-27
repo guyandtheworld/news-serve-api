@@ -94,7 +94,9 @@ class GetEntity(GenericGET):
     """
 
     def post(self, request):
-        user = self.getSingleObjectFromPOST(
+
+        # check if user exists
+        self.getSingleObjectFromPOST(
             request, "user_uuid", "uuid", DashUser)
         entity = self.getSingleObjectFromPOST(
             request, "company_uuid", "uuid", Entity)
@@ -189,7 +191,8 @@ class GetBucketEntity(GenericGET):
                 message = "this entity is not tracked under this scenario'"
                 return Response({"success": False, "message": message})
 
-            stories = user_entity_bucket(bucket.uuid, entity.uuid, bucket.scenarioID.uuid)
+            stories = user_entity_bucket(
+                bucket.uuid, entity.uuid, bucket.scenarioID.uuid)
 
             if len(stories) == 0:
                 message = "no articles found"

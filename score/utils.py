@@ -11,7 +11,7 @@ def hotness(baseScore, timeDiff):
     """
     if (timeDiff >= 1):
         x = timeDiff - 1
-        baseScore = baseScore * math.exp(-.2*x*x)
+        baseScore = baseScore * math.exp(-.2 * x * x)
     return baseScore
 
 
@@ -29,20 +29,21 @@ def get_gross_entity_score(entity_scores):
     df.drop(['grossScore', 'timeDiff'], axis=1, inplace=True)
     for entity in df["entityID_id"].unique():
         entity_df = df[df["entityID_id"] == entity]
-        bucket_scores = entity_df.groupby(['bucketID_id', "name"])["score"].agg(['sum', 'count'])
+        bucket_scores = entity_df.groupby(['bucketID_id', "name"])[
+            "score"].agg(['sum', 'count'])
         bucket_scores = bucket_scores.reset_index()
 
         # normalize score by dividing the sum with the amount of articles
-        bucket_scores['score'] = np.where(bucket_scores['count'] < 1, \
-            bucket_scores['count'], bucket_scores['sum']/bucket_scores['count'])
+        bucket_scores['score'] = np.where(bucket_scores['count'] < 1,
+                                          bucket_scores['count'], bucket_scores['sum'] / bucket_scores['count'])
 
         # sum all buckets and normalize with bucket count
-        gross_entity_score = bucket_scores['score'].sum()/len(bucket_scores)
+        gross_entity_score = bucket_scores['score'].sum() / len(bucket_scores)
 
         obj = {}
         obj["uuid"] = entity
         obj["name"] = bucket_scores["name"].values[0]
-        obj["gross_entity_score"] = round(gross_entity_score*100, 2)
+        obj["gross_entity_score"] = round(gross_entity_score * 100, 2)
         scores.append(obj)
 
     return scores
@@ -60,12 +61,13 @@ def get_gross_bucket_scores(bucket_scores):
     df["score"] = df.apply(lambda x: hotness(x['grossScore'], x['timeDiff']), axis=1)
     df.drop(['grossScore', 'timeDiff'], axis=1, inplace=True)
 
-    bucket_scores = df.groupby(['bucketID_id', "name"])["score"].agg(['sum', 'count'])
+    bucket_scores = df.groupby(['bucketID_id', "name"])[
+        "score"].agg(['sum', 'count'])
     bucket_scores = bucket_scores.reset_index()
 
     # normalize score by dividing the sum with the amount of articles
-    bucket_scores['score'] = np.where(bucket_scores['count'] < 1, \
-        bucket_scores['count'], bucket_scores['sum']/bucket_scores['count'])
+    bucket_scores['score'] = np.where(bucket_scores['count'] < 1,
+                                      bucket_scores['count'], bucket_scores['sum'] / bucket_scores['count'])
 
     bucket_scores.drop(["sum", "count"], axis=1, inplace=True)
 
@@ -84,14 +86,16 @@ def get_gross_sentiment_scores(sentiment_scores):
     df["score"] = df.apply(lambda x: hotness(x['sentiment'], x['timeDiff']), axis=1)
     df.drop(['sentiment', 'timeDiff'], axis=1, inplace=True)
 
-    sentiment_scores = df.groupby(['entityID_id', "name"])["score"].agg(['sum', 'count'])
+    sentiment_scores = df.groupby(['entityID_id', "name"])[
+        "score"].agg(['sum', 'count'])
     sentiment_scores = sentiment_scores.reset_index()
 
     # normalize score by dividing the sum with the amount of articles
-    sentiment_scores['score'] = sentiment_scores['sum']/sentiment_scores['count']
+    sentiment_scores['score'] = sentiment_scores['sum'] / sentiment_scores['count']
 
     sentiment_scores.drop(["sum", "count"], axis=1, inplace=True)
 
     sentiment_scores["score"] *= 100
-    sentiment_scores["score"] = sentiment_scores["score"].apply(lambda x: round(x, 2))
+    sentiment_scores["score"] = sentiment_scores["score"].apply(
+        lambda x: round(x, 2))
     return sentiment_scores.to_dict('records')
