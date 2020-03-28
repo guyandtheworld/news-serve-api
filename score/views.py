@@ -1,6 +1,7 @@
 import json
 
 from django.db.models import Q
+from rest_framework import status
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
@@ -95,10 +96,12 @@ class GetPortfolioScore(GenericGET):
 
             return Response({"success": True,
                              "samples": len(scores),
-                             "data": scores})
+                             "data": scores},
+                            status=status.HTTP_200_OK)
 
         message = "user or scenario doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetSentiment(GenericGET):
@@ -141,10 +144,12 @@ class GetSentiment(GenericGET):
 
             return Response({"success": True,
                              "samples": len(scores),
-                             "data": scores})
+                             "data": scores},
+                            status=status.HTTP_200_OK)
 
         message = "user or scenario doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetNewsCount(GenericGET):
@@ -185,10 +190,12 @@ class GetNewsCount(GenericGET):
 
             return Response({"success": True,
                              "samples": len(counts),
-                             "data": counts})
+                             "data": counts},
+                            status=status.HTTP_200_OK)
 
         message = "user or scenario doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBucketScore(GenericGET):
@@ -230,16 +237,19 @@ class GetBucketScore(GenericGET):
                     scores.append(obj)
                 return Response({"success": True,
                                  "samples": len(scores),
-                                 "data": scores})
+                                 "data": scores},
+                                status=status.HTTP_200_OK)
 
             scores = get_gross_bucket_scores(bucket_scores)
 
             return Response({"success": True,
                              "samples": len(scores),
-                             "data": scores})
+                             "data": scores},
+                            status=status.HTTP_200_OK)
 
         message = "user or scenario doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetEntityBucketScore(GenericGET):
@@ -282,13 +292,16 @@ class GetEntityBucketScore(GenericGET):
                     scores.append(obj)
                 return Response({"success": True,
                                  "samples": len(scores),
-                                 "data": scores})
+                                 "data": scores},
+                                status=status.HTTP_200_OK)
 
             scores = get_gross_bucket_scores(entity_scores)
 
             return Response({"success": True,
                              "samples": len(scores),
-                             "data": scores})
+                             "data": scores},
+                            status=status.HTTP_200_OK)
 
         message = "user or scenario or entity doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)

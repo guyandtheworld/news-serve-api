@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 
+from rest_framework import status
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
@@ -34,8 +35,11 @@ class EntityInfo(views.APIView):
         entity = request.data["entity"]
         if entity:
             data = get_anchors(entity)
-            return Response({"success": True, "data": data})
-        return Response({"success": False})
+            return Response({"success": True, "data": data},
+                            status=status.HTTP_200_OK
+                            )
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class EntityAlias(views.APIView):
@@ -55,8 +59,10 @@ class EntityAlias(views.APIView):
         entity = request.data["entity"]
         if entity:
             data = get_alias(entity)
-            return Response({"success": True, "data": data})
-        return Response({"success": False})
+            return Response({"success": True, "data": data},
+                            status=status.HTTP_200_OK)
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class ListPortfolio(views.APIView):
@@ -93,9 +99,11 @@ class ListPortfolio(views.APIView):
             for i in range(len(data)):
                 data[i]['portfolio_id'] = portfolio_ids[data[i]["uuid"]]
             return Response({"success": True, "length": len(entities),
-                             "data": data})
+                             "data": data},
+                            status=status.HTTP_200_OK)
         msg = "no entities in the portfolio"
-        return Response({"success": False, "data": msg})
+        return Response({"success": False, "data": msg},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class ListScenarioEntities(views.APIView):
@@ -119,7 +127,8 @@ class ListScenarioEntities(views.APIView):
             # fetch entity objects in portfolio
             serializer = EntityListSerializer(entities, many=True)
             return Response({"success": True, "length": len(entities),
-                             "data": serializer.data})
+                             "data": serializer.data},
+                            status=status.HTTP_200_OK)
         msg = "no entities in the scenario"
         return Response({"success": False, "data": msg})
 
@@ -161,7 +170,8 @@ class AddToPortfolio(views.APIView):
                 portfolio_uuids.append(obj.uuid)
 
         return Response(
-            {"success": True, "portfolio_id": portfolio_uuids}
+            {"success": True, "portfolio_id": portfolio_uuids},
+            status=status.HTTP_201_CREATED
         )
 
     def delete(self, request):
@@ -170,7 +180,8 @@ class AddToPortfolio(views.APIView):
             portfolio = Portfolio.objects.get(uuid=portfolio_id)
             portfolio.delete()
         return Response(
-            {"success": True}
+            {"success": True},
+            status=status.HTTP_200_OK
         )
 
 
@@ -208,10 +219,12 @@ class AddEntity(views.APIView):
             else:
                 entity = entity_serializer.save()
                 return Response(
-                    {"success": True, "entity_uuid": entity.uuid}
+                    {"success": True, "entity_uuid": entity.uuid},
+                    status=status.HTTP_201_CREATED
                 )
         msg = "no given user or scenario or entity exists"
-        return Response({"success": False, "data": msg})
+        return Response({"success": False, "data": msg},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class AddAlias(views.APIView):
@@ -236,7 +249,9 @@ class AddAlias(views.APIView):
             for obj in alias:
                 alias_uuid.append(obj.uuid)
             return Response(
-                {"success": True, "alias_uuid": alias_uuid}
+                {"success": True, "alias_uuid": alias_uuid},
+                status=status.HTTP_201_CREATED
             )
         msg = "no given user or scenario or entity exists"
-        return Response({"success": False, "data": msg})
+        return Response({"success": False, "data": msg},
+                        status=status.HTTP_404_NOT_FOUND)

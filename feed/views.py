@@ -1,6 +1,6 @@
 import json
-import pandas as pd
 
+from rest_framework import status
 from rest_framework import views
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
@@ -83,9 +83,11 @@ class GetPortfolio(GenericGET):
 
             return Response({"success": True,
                              "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "data": processed_stories},
+                            status=status.HTTP_200_OK)
         message = "user or scenario doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetEntity(GenericGET):
@@ -109,13 +111,14 @@ class GetEntity(GenericGET):
 
             processed_stories = attach_story_entities(score_in_bulk(stories))
 
-
             return Response({"success": True,
                              "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "data": processed_stories},
+                            status=status.HTTP_200_OK)
 
         message = "user or entity doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBucket(GenericGET):
@@ -159,14 +162,17 @@ class GetBucket(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = attach_story_entities(score_in_bulk(stories, bucket=True))
+            processed_stories = attach_story_entities(
+                score_in_bulk(stories, bucket=True))
 
             return Response({"success": True,
                              "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "data": processed_stories},
+                            status=status.HTTP_200_OK)
 
         message = "user or bucket doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBucketEntity(GenericGET):
@@ -198,11 +204,14 @@ class GetBucketEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message})
 
-            processed_stories = attach_story_entities(score_in_bulk(stories, bucket=True))
+            processed_stories = attach_story_entities(
+                score_in_bulk(stories, bucket=True))
 
             return Response({"success": True,
                              "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "data": processed_stories},
+                            status=status.HTTP_200_OK)
 
         message = "user or bucket doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)

@@ -91,25 +91,26 @@ def score_in_bulk(articles, bucket=False):
     result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
     return result_sample.to_dict(orient='records')
 
+
 def attach_story_entities(processed_stories):
-        """
-        Take in a list of 'processed' stories
-        and return the entities found in those stories
-        """
-        story_ids = [story['uuid'] for story in processed_stories]
-        story_ent = pd.DataFrame(story_entities(story_ids)).astype(str)\
-        .set_index('uuid').rename({"entityID_id":"entity_id"}, axis=1)
+    """
+    Take in a list of 'processed' stories
+    and return the entities found in those stories
+    """
+    story_ids = [story['uuid'] for story in processed_stories]
+    story_ent = pd.DataFrame(story_entities(story_ids)).astype(str)\
+        .set_index('uuid').rename({"entityID_id": "entity_id"}, axis=1)
 
-        d = {}
+    d = {}
 
-        for i in story_ent['storyID_id'].unique():
-            d[i] = story_ent[story_ent['storyID_id']==i].drop(['storyID_id'],axis=1)\
+    for i in story_ent['storyID_id'].unique():
+        d[i] = story_ent[story_ent['storyID_id'] == i].drop(['storyID_id'], axis=1)\
             .to_dict('records')
 
-        for story in processed_stories:
-            try:
-                story['entities'] = d[story['uuid']]
-            except:
-                story['entities'] = {}
+    for story in processed_stories:
+        try:
+            story['entities'] = d[story['uuid']]
+        except Exception:
+            story['entities'] = {}
 
-        return processed_stories
+    return processed_stories

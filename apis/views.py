@@ -76,10 +76,12 @@ class GetUserUUID(views.APIView):
             content = {
                 'user': dash_user.uuid,
             }
-            return Response(content)
+            return Response(content,
+                            status=status.HTTP_200_OK)
         else:
             msg = "no dash user exists"
-            return Response({"success": False, "message": msg})
+            return Response({"message": msg},
+                            status=status.HTTP_404_NOT_FOUND)
 
 
 class SignUp(CreateAPIView):
@@ -121,9 +123,9 @@ class SignUp(CreateAPIView):
             )
 
             # create and return a token for the user
-            token = Token.objects.create(user=user_obj)
-            return Response({'token': str(token)})
-        return Response({"success": False})
+            token = Token.objects.create(user=dash_user_obj.user)
+            return Response({'token': str(token)}, status=status.HTTP_200_OK)
+        return Response({"success": False}, status=status.HTTP_406_NOT_ACCEPTABLE)
 
 
 class Logout(views.APIView):
@@ -156,23 +158,27 @@ class ObtainCustomAuthToken(views.APIView):
             'token': str(token.key),
         }
 
-        return Response(content)
+        return Response(content, status=status.HTTP_200_OK)
 
 
 class GetClientUUID(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
-            return Response({"success": True, "uuid": data.clientID.uuid})
-        return Response({"success": False})
+            return Response({"success": True, "uuid": data.clientID.uuid},
+                            status=status.HTTP_200_OK)
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetClientName(GenericGET):
     def post(self, request):
         data = self.getSingleObjectFromPOST(request, "uuid", "uuid", DashUser)
         if data:
-            return Response({"success": True, "name": data.clientID.name})
-        return Response({"success": False})
+            return Response({"success": True, "name": data.clientID.name},
+                            status=status.HTTP_200_OK)
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetUserStatus(GenericGET):
@@ -185,8 +191,10 @@ class GetUserStatus(GenericGET):
                              "status": data.status,
                              "date": data.setupDate,
                              "expired": expired
-                             })
-        return Response({"success": False})
+                             },
+                            status=status.HTTP_200_OK)
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetUserDefaultScenario(GenericGET):
@@ -198,9 +206,11 @@ class GetUserDefaultScenario(GenericGET):
                     "success": True,
                     "scenario": data.defaultScenario.name,
                     "scenario_uuid": data.defaultScenario.uuid
-                }
+                },
+                status=status.HTTP_200_OK
             )
-        return Response({"success": False})
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetScenarioName(GenericGET):
@@ -208,8 +218,10 @@ class GetScenarioName(GenericGET):
         data = self.getSingleObjectFromPOST(
             request, "uuid", "uuid", DashUser.defaultScenario.name)
         if data:
-            return Response({"success": True, "name": data.name})
-        return Response({"success": False})
+            return Response({"success": True, "name": data.name},
+                            status=status.HTTP_200_OK)
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBuckets(GenericGET):
@@ -220,9 +232,11 @@ class GetBuckets(GenericGET):
             serializer = BucketSerializer(data, many=True)
             if data:
                 return Response(
-                    {"success": True, "result": serializer.data}
+                    {"success": True, "result": serializer.data},
+                    status=status.HTTP_200_OK
                 )
-        return Response({"success": False})
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBucketWeights(GenericGET):
@@ -232,9 +246,11 @@ class GetBucketWeights(GenericGET):
         if data:
             return Response(
                 {"success": True, "result": serializers.serialize(
-                    "json", data)}
+                    "json", data)},
+                status=status.HTTP_200_OK
             )
-        return Response({"success": False})
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class ListAllScenario(views.APIView):
@@ -243,9 +259,11 @@ class ListAllScenario(views.APIView):
         serializer = ScenarioSerializer(data, many=True)
         if data:
             return Response(
-                {"success": True, "result": serializer.data}
+                {"success": True, "result": serializer.data},
+                status=status.HTTP_200_OK
             )
-        return Response({"success": False})
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class ListAllClients(views.APIView):
@@ -254,6 +272,8 @@ class ListAllClients(views.APIView):
         serializer = ClientSerializer(data, many=True)
         if data:
             return Response(
-                {"success": True, "result": serializer.data}
+                {"success": True, "result": serializer.data},
+                status=status.HTTP_200_OK
             )
-        return Response({"success": False})
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
