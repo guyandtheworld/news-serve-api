@@ -121,4 +121,5 @@ STATIC_URL = '/static/'
 CORS_ORIGIN_WHITELIST = [
     "https://alrt.herokuapp.com",
     "http://dash.alrt.ai",
+    "https://dash.alrt.ai",
 ]
