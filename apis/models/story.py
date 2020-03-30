@@ -83,7 +83,7 @@ class EntityScore(models.Model):
                             editable=False)
     storyID = models.ForeignKey("Story", on_delete=models.CASCADE)
     entryTime = models.DateTimeField()
-    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE)
+    entityID = models.ForeignKey("StoryEntityRef", on_delete=models.CASCADE)
     sourceID = models.ForeignKey("Source", on_delete=models.CASCADE)
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)

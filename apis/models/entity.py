@@ -14,7 +14,7 @@ class Entity(models.Model):
     dbpediaResource = models.CharField(max_length=100, blank=True)
     wikiResource = models.CharField(max_length=100, blank=True)
     historyProcessed = models.BooleanField(default=False)
-    entityType = models.CharField(max_length=100)
+    entityType = models.ForeignKey("EntityType", on_delete=models.PROTECT)
     entryVerified = models.BooleanField(default=False)
     manualEntry = models.BooleanField(default=False)
 

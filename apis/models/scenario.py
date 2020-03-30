@@ -9,6 +9,7 @@ class Scenario(models.Model):
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUSES)
     trackingDays = models.SmallIntegerField()
+    entityType = models.ForeignKey("EntityType", on_delete=models.PROTECT)
 
     def __str__(self):
         return self.name
