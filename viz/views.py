@@ -4,9 +4,8 @@ from rest_framework import status
 from rest_framework import views
 from rest_framework.response import Response
 from apis.models.users import DashUser
-from apis.models.entity import Entity
-from apis.models.scenario import Bucket
-from apis.models.scenario import Scenario
+from apis.models.entity import Entity, StoryEntityRef
+from apis.models.scenario import Bucket, Scenario
 
 from .sql import news_count_query, bucket_score_query, sentiment_query
 
@@ -20,11 +19,21 @@ class NewsCountViz(views.APIView):
     def post(self, request, format=None):
         get_object_or_404(DashUser, uuid=request.data["user"])
 
+        if "mode" in request.data:
+            mode = request.data["mode"]
+        else:
+            mode = "portfolio"
+
         # viz for entities
         if request.data["type"] == 'entity':
-            entity = get_object_or_404(Entity,
-                                       uuid=request.data["entity_uuid"])
-            data = news_count_query("entity", entity.uuid)
+            if mode == "portfolio":
+                entity = get_object_or_404(Entity,
+                                           uuid=request.data["entity_uuid"])
+            else:
+                entity = get_object_or_404(StoryEntityRef,
+                                           uuid=request.data["entity_uuid"])
+
+            data = news_count_query("entity", entity.uuid, mode=mode)
             return Response({"success": True, "length": len(data),
                              "data": data},
                             status=status.HTTP_200_OK)
@@ -52,21 +61,34 @@ class BucketScoreViz(views.APIView):
     def post(self, request, format=None):
         get_object_or_404(DashUser, uuid=request.data["user"])
         bucket = get_object_or_404(Bucket, uuid=request.data['bucket_uuid'])
-        scenario = get_object_or_404(Scenario,
-                                     uuid=request.data['scenario_uuid'])
+
+        if "mode" in request.data:
+            mode = request.data["mode"]
+        else:
+            mode = "portfolio"
+
         # viz for entity and bucket
         if request.data["type"] == 'entity':
-            entity = get_object_or_404(Entity,
-                                       uuid=request.data["entity_uuid"])
+            if mode == "portfolio":
+                entity = get_object_or_404(Entity,
+                                           uuid=request.data["entity_uuid"])
+            else:
+                entity = get_object_or_404(StoryEntityRef,
+                                           uuid=request.data["entity_uuid"])
+
             data = bucket_score_query("entity",
-                                      bucket.uuid, entity.uuid, scenario.uuid)
+                                      bucket.uuid,
+                                      entity.uuid,
+                                      scenario_id=bucket.scenarioID.uuid)
+
             return Response({"success": True, "length": len(data),
                              "data": data},
                             status=status.HTTP_200_OK)
         # viz for just buckets
         if request.data["type"] == 'bucket':
             data = bucket_score_query("bucket",
-                                      bucket.uuid, scenario_id=scenario.uuid)
+                                      bucket.uuid,
+                                      scenario_id=bucket.scenarioID.uuid)
             return Response({"success": True, "length": len(data),
                              "data": data},
                             status=status.HTTP_200_OK)
@@ -85,13 +107,27 @@ class SentimentViz(views.APIView):
     def post(self, request, format=None):
 
         get_object_or_404(DashUser, uuid=request.data["user"])
+        scenario = get_object_or_404(Scenario, uuid=request.data["scenario_uuid"])
+
+        if "mode" in request.data:
+            mode = request.data["mode"]
+        else:
+            mode = "portfolio"
 
         # viz for entities
         if request.data["type"] == 'entity':
-            entity = get_object_or_404(Entity,
-                                       uuid=request.data["entity_uuid"])
-            data = sentiment_query(
-                "entity", entity.uuid, request.data["sentiment_type"], entity.scenarioID.uuid)
+            if mode == "portfolio":
+                entity = get_object_or_404(Entity,
+                                           uuid=request.data["entity_uuid"])
+            else:
+                entity = get_object_or_404(StoryEntityRef,
+                                           uuid=request.data["entity_uuid"])
+
+            data = sentiment_query("entity",
+                                   entity.uuid,
+                                   request.data["sentiment_type"],
+                                   scenario_id=scenario.uuid,
+                                   mode=mode)
             return Response({"success": True, "length": len(data),
                              "data": data},
                             status=status.HTTP_200_OK)

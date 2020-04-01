@@ -28,7 +28,7 @@ def get_latest_model_uuid(scenario):
     return str(row[0])
 
 
-def news_count_query(viz_type, uuid, scenario_id=None):
+def news_count_query(viz_type, uuid, scenario_id=None, mode=None):
     """
     query to fetch the news count per day of
     * an entity
@@ -36,11 +36,20 @@ def news_count_query(viz_type, uuid, scenario_id=None):
     """
 
     if viz_type == "entity":
-        query = """
-                select published_date::date, count(*) from apis_story as2
-                where "entityID_id" = '{}'
-                group by 1 order by 1
-                """.format(uuid)
+        if mode == "portfolio":
+            query = """
+                    select published_date::date, count(*) from apis_story as2
+                    where "entityID_id" = '{}'
+                    group by 1 order by 1
+                    """.format(uuid)
+        else:
+            query = """
+                    select published_date::date, count(*) from apis_storyentitymap as3
+                    left join apis_story sty
+                    on sty.uuid = as3."storyID_id"
+                    where as3."entityID_id" = '{}'
+                    group by 1 order by 1
+                    """.format(uuid)
     elif viz_type == "bucket":
         model_id = get_latest_model_uuid(scenario_id)
         query = """
@@ -60,7 +69,7 @@ def news_count_query(viz_type, uuid, scenario_id=None):
     return rows
 
 
-def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None):
+def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None, mode=None):
     """
     query to fetch the sentiment per day of
     * an entity
@@ -68,16 +77,31 @@ def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None):
     """
 
     if viz_type == "entity":
-        query = """
-                select published_date::date,
-                sum(coalesce("sentiment", '0')::float)/count(*) as "sentiment" from
-                (select published_date, sentiment->'{}' as "sentiment" from
-                apis_story as2
-                inner join apis_storysentiment sent
-                on as2.uuid=sent."storyID_id"
-                where "entityID_id" = '{}') sem
-                group by 1 order by 1
-                """.format(sentiment_type, uuid)
+        if mode == "portfolio":
+            query = """
+                    select published_date::date,
+                    sum(coalesce("sentiment", '0')::float)/count(*) as "sentiment" from
+                    (select published_date, sentiment->'{}' as "sentiment" from
+                    apis_story as2
+                    inner join apis_storysentiment sent
+                    on as2.uuid=sent."storyID_id"
+                    where "entityID_id" = '{}') sem
+                    group by 1 order by 1
+                    """.format(sentiment_type, uuid)
+        else:
+            query = """
+                    select published_date::date,
+                    sum(coalesce("sentiment", '0')::float)/count(*) as "sentiment" from
+                    (select published_date, sentiment->'{}' as "sentiment" from
+                    apis_storyentitymap as3
+                    inner join
+                    apis_story sty
+                    on sty.uuid = as3."storyID_id"
+                    inner join apis_storysentiment sent
+                    on sty.uuid=sent."storyID_id"
+                    where as3."entityID_id" = '{}') sem
+                    group by 1 order by 1
+                    """.format(sentiment_type, uuid)
     elif viz_type == "bucket":
         model_id = get_latest_model_uuid(scenario_id)
         query = """
