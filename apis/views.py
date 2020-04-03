@@ -205,7 +205,8 @@ class GetUserDefaultScenario(GenericGET):
                 {
                     "success": True,
                     "scenario": data.defaultScenario.name,
-                    "scenario_uuid": data.defaultScenario.uuid
+                    "scenario_uuid": data.defaultScenario.uuid,
+                    "entity_type": data.defaultScenario.entityType.uuid
                 },
                 status=status.HTTP_200_OK
             )

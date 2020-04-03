@@ -196,7 +196,7 @@ class AddEntity(views.APIView):
         "dbpediaResource": "http://dbpedia.org/page/Deloitte",
         "wikiResource": "https://en.wikipedia.org/wiki/Deloitte",
         "manualEntry": true,
-        "entityType": "company",
+        "entityType": <ENTITY TYPE>,
         "scenarioID": "<SCENARIO UUID>"
     }
     """
