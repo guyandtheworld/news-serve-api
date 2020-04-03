@@ -59,7 +59,7 @@ def portfolio_score(entity_ids, scenario_id):
             on ae."storyID_id" = sty.uuid
             inner join apis_bucket bckt
             on ae."bucketID_id" = bckt.uuid
-            inner join apis_entity entty
+            inner join apis_storyentityref entty
             on ae."entityID_id" = entty.uuid
             where ae."entityID_id" in {}
             and model_label != 'other'
@@ -128,8 +128,6 @@ def entity_bucket_score(entity_id, scenario_id):
             on ae."storyID_id" = sty.uuid
             inner join apis_bucket bckt
             on ae."bucketID_id" = bckt.uuid
-            inner join apis_entity entty
-            on ae."entityID_id" = entty.uuid
             where ae."entityID_id" = %s
             and "modelID_id" = {}
             and model_label != 'other'
@@ -142,7 +140,7 @@ def entity_bucket_score(entity_id, scenario_id):
     return rows
 
 
-def portfolio_count(entity_ids):
+def portfolio_count(entity_ids, mode):
     """
     Returns news count for a user's portfolio
     """
@@ -150,13 +148,22 @@ def portfolio_count(entity_ids):
     entity_ids = "', '".join(entity_ids)
     entity_ids = "('{}')".format(entity_ids)
 
-    query = """
-            select entty.name, entty.uuid, news_count from
-            (select "entityID_id", count(*) as news_count from
-            apis_story as2 group by "entityID_id") grby
-            inner join apis_entity entty on grby."entityID_id" = entty.uuid
-            where entty.uuid in {}
-            """.format(entity_ids)
+    if mode == "portfolio":
+        query = """
+                select entty.name, entty.uuid, news_count from
+                (select "entityID_id", count(*) as news_count from
+                apis_story as2 group by "entityID_id") grby
+                inner join apis_entity entty on grby."entityID_id" = entty.uuid
+                where entty.uuid in {}
+                """.format(entity_ids)
+    else:
+        query = """
+                select entty.name, entty.uuid, news_count from
+                (select "entityID_id", count(*) as news_count from
+                apis_storyentitymap as2 group by "entityID_id") grby
+                inner join apis_storyentityref entty on grby."entityID_id" = entty.uuid
+                where entty.uuid in {}
+                """.format(entity_ids)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [START_DATE])
@@ -164,7 +171,7 @@ def portfolio_count(entity_ids):
     return rows
 
 
-def portfolio_sentiment(entity_ids):
+def portfolio_sentiment(entity_ids, mode):
     """
     Returns news count for a user's portfolio
     """
@@ -172,18 +179,34 @@ def portfolio_sentiment(entity_ids):
     entity_ids = "', '".join(entity_ids)
     entity_ids = "('{}')".format(entity_ids)
 
-    query = """
-            select entty."name", "entityID_id", sentiment->'compound' as "sentiment",
-            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
-            apis_storysentiment as2
-            inner join apis_story sty
-            on as2."storyID_id" = sty.uuid
-            inner join apis_entity entty
-            on "entityID_id" = entty.uuid
-            where entty.uuid in {}
-            and published_date > %s
-            """.format(entity_ids)
+    if mode == "portfolio":
+        query = """
+                select entty."name", "entityID_id", sentiment->'compound' as "sentiment",
+                extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
+                extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+                apis_storysentiment as2
+                inner join apis_story sty
+                on as2."storyID_id" = sty.uuid
+                inner join apis_storyentityref entty
+                on "entityID_id" = entty.uuid
+                where entty.uuid in {}
+                and published_date > %s
+                """.format(entity_ids)
+    else:
+        query = """
+                select as3."name", as2."entityID_id", sentiment->'compound' as "sentiment",
+                extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
+                extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+                apis_storyentitymap as2
+                inner join apis_story sty
+                on as2."storyID_id" = sty.uuid
+                inner join apis_storyentityref as3
+                on as2."entityID_id" = as3.uuid
+                inner join apis_storysentiment stysent
+                on stysent."storyID_id" = sty.uuid
+                where as2."entityID_id" in {}
+                and published_date > %s
+                """.format(entity_ids)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [START_DATE])

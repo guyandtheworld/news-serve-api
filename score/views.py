@@ -9,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from apis.models.users import DashUser
 from apis.models.scenario import Scenario, Bucket
-from apis.models.entity import Entity
+from apis.models.entity import Entity, StoryEntityRef
+from auto.utils import get_scenario_entity_count
 
 from .sql import (portfolio_score, bucket_score,
                   entity_bucket_score, portfolio_sentiment,
@@ -42,6 +43,21 @@ class GenericGET(views.APIView):
             return obj
         return False
 
+    def getEntitiesFromAuto(self, request, scenario_id):
+        if 'n_entities' in request.data:
+            n_entities = request.data['n_entities']
+        else:
+            n_entities = 20
+
+        if 'type' in request.data:
+            type_id = request.data['type']
+        else:
+            type_id = None
+
+        auto_entities = get_scenario_entity_count(scenario_id, type_id, n_entities)
+        entity_ids = [str(ent['entityID_id']) for ent in auto_entities]
+        return entity_ids
+
 
 class GetPortfolioScore(GenericGET):
     """
@@ -58,25 +74,34 @@ class GetPortfolioScore(GenericGET):
             message = "user is not subscribed to the scenario"
             return Response({"success": False, "message": message})
 
+        if "mode" in request.data:
+            mode = request.data["mode"]
+        else:
+            mode = "portfolio"
+
         if user and scenario:
-            query = """
-                        select * from public.apis_entity as2 where uuid in
-                        (
-                        select "entityID_id" from public.apis_portfolio
-                        where "userID_id" = '{}'
-                        and "scenarioID_id" = '{}'
-                        )
-                    """
-            portfolio = Entity.objects.raw(
-                query.format(user.uuid, scenario.uuid))
+            if mode == "portfolio" or mode is None:
+                query = """
+                            select * from public.apis_entity as2 where uuid in
+                            (
+                            select "entityID_id" from public.apis_portfolio
+                            where "userID_id" = '{}'
+                            and "scenarioID_id" = '{}'
+                            )
+                        """
+                portfolio = Entity.objects.raw(
+                    query.format(user.uuid, scenario.uuid))
 
-            portfolio = [c for c in portfolio]
+                portfolio = [c for c in portfolio]
 
-            if len(portfolio) == 0:
-                message = "no companies in portfolio"
-                return Response({"success": True, "data": message})
+                if len(portfolio) == 0:
+                    message = "no companies in portfolio"
+                    return Response({"success": True, "data": message})
 
-            entity_ids = [str(c.uuid) for c in portfolio]
+                entity_ids = [str(c.uuid) for c in portfolio]
+            elif mode == "auto":
+                entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+
             entity_scores = portfolio_score(entity_ids, scenario.uuid)
 
             # if no scores return 0
@@ -119,26 +144,34 @@ class GetSentiment(GenericGET):
             message = "user is not subscribed to the scenario"
             return Response({"success": False, "message": message})
 
+        if "mode" in request.data:
+            mode = request.data["mode"]
+        else:
+            mode = "portfolio"
+
         if user and scenario:
-            query = """
-                        select * from public.apis_entity as2 where uuid in
-                        (
-                        select "entityID_id" from public.apis_portfolio
-                        where "userID_id" = '{}'
-                        and "scenarioID_id" = '{}'
-                        )
-                    """
-            portfolio = Entity.objects.raw(
-                query.format(user.uuid, scenario.uuid))
+            if mode == "portfolio" or mode is None:
+                query = """
+                            select * from public.apis_entity as2 where uuid in
+                            (
+                            select "entityID_id" from public.apis_portfolio
+                            where "userID_id" = '{}'
+                            and "scenarioID_id" = '{}'
+                            )
+                        """
+                portfolio = Entity.objects.raw(
+                    query.format(user.uuid, scenario.uuid))
 
-            portfolio = [c for c in portfolio]
+                portfolio = [c for c in portfolio]
 
-            if len(portfolio) == 0:
-                message = "no companies in portfolio"
-                return Response({"success": True, "data": message})
+                if len(portfolio) == 0:
+                    message = "no companies in portfolio"
+                    return Response({"success": True, "data": message})
 
-            entity_ids = [str(c.uuid) for c in portfolio]
-            entity_scores = portfolio_sentiment(entity_ids)
+                entity_ids = [str(c.uuid) for c in portfolio]
+            elif mode == "auto":
+                entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+            entity_scores = portfolio_sentiment(entity_ids, mode)
 
             scores = get_gross_sentiment_scores(entity_scores)
 
@@ -167,26 +200,36 @@ class GetNewsCount(GenericGET):
             message = "user is not subscribed to the scenario"
             return Response({"success": False, "message": message})
 
+        if "mode" in request.data:
+            mode = request.data["mode"]
+        else:
+            mode = "portfolio"
+
         if user and scenario:
-            query = """
-                        select * from public.apis_entity as2 where uuid in
-                        (
-                        select "entityID_id" from public.apis_portfolio
-                        where "userID_id" = '{}'
-                        and "scenarioID_id" = '{}'
-                        )
-                    """
-            portfolio = Entity.objects.raw(
-                query.format(user.uuid, scenario.uuid))
+            if mode == "portfolio" or mode is None:
 
-            portfolio = [c for c in portfolio]
+                query = """
+                            select * from public.apis_entity as2 where uuid in
+                            (
+                            select "entityID_id" from public.apis_portfolio
+                            where "userID_id" = '{}'
+                            and "scenarioID_id" = '{}'
+                            )
+                        """
+                portfolio = Entity.objects.raw(
+                    query.format(user.uuid, scenario.uuid))
 
-            if len(portfolio) == 0:
-                message = "no companies in portfolio"
-                return Response({"success": True, "data": message})
+                portfolio = [c for c in portfolio]
 
-            entity_ids = [str(c.uuid) for c in portfolio]
-            counts = portfolio_count(entity_ids)
+                if len(portfolio) == 0:
+                    message = "no companies in portfolio"
+                    return Response({"success": True, "data": message})
+
+                entity_ids = [str(c.uuid) for c in portfolio]
+            elif mode == "auto":
+                entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+
+            counts = portfolio_count(entity_ids, mode)
 
             return Response({"success": True,
                              "samples": len(counts),
@@ -262,7 +305,7 @@ class GetEntityBucketScore(GenericGET):
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
         entity = self.getSingleObjectFromPOST(
-            request, "entity", "uuid", Entity)
+            request, "entity", "uuid", StoryEntityRef)
 
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
