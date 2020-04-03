@@ -7,11 +7,22 @@ PORTFOLIO_DAYS = 150
 # get entity name, and story body
 # get entities from title and body
 # get sentiment from title and body
-EXTRA_INFO = """
+EXTRA_INFO_PORT = """
             inner join apis_entity ent on stry."entityID_id" = ent.uuid
             inner join (select "storyID_id", body from apis_storybody) stry_bdy_tbl
             on stry_bdy_tbl."storyID_id" = stry.uuid
+            inner join
+            (select "storyID_id", sentiment from apis_storysentiment where is_headline = true) title_sntmnt
+            on title_sntmnt."storyID_id" = stry.uuid
+            left join
+            (select "storyID_id", sentiment from apis_storysentiment where is_headline = false) body_sentiment
+            on body_sentiment."storyID_id" = stry.uuid
+            """
 
+EXTRA_INFO_AUTO = """
+            inner join apis_storyentityref ent on entitymap."entityID_id" = ent.uuid
+            inner join (select "storyID_id", body from apis_storybody) stry_bdy_tbl
+            on stry_bdy_tbl."storyID_id" = stry.uuid
             inner join
             (select "storyID_id", sentiment from apis_storysentiment where is_headline = true) title_sntmnt
             on title_sntmnt."storyID_id" = stry.uuid
@@ -46,7 +57,7 @@ def get_latest_model_uuid(scenario):
     return str(row[0])
 
 
-def user_portfolio(entity_ids):
+def user_portfolio(entity_ids, mode):
     """
     query to filter stories based on the portfolio
     language and published date and then return
@@ -59,16 +70,30 @@ def user_portfolio(entity_ids):
     start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
     start_date = "'{}'".format(start_date)
 
-    query = """
-            select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-            published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
-            title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
-            FROM public.apis_story as stry
-            inner join
-            (select * from apis_storybody as2 where status_code = 200) as stby
-            on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-            and "entityID_id" in {} and published_date > %s {}
-        """.format(ids_str, EXTRA_INFO)
+    if mode == 'portfolio':
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
+                title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
+                FROM public.apis_story as stry
+                inner join
+                (select * from apis_storybody as2 where status_code = 200) as stby
+                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and "entityID_id" in {} and published_date > %s {}
+            """.format(ids_str, EXTRA_INFO_PORT)
+    elif mode == "auto":
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, "domain", source_country, entitymap."entityID_id", ent."name", stry_bdy_tbl.body,
+                title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
+                from apis_storyentitymap entitymap
+                inner join apis_story stry
+                on entitymap."storyID_id" = stry.uuid
+                inner join
+                (select * from apis_storybody as2 where status_code = 200) as stby
+                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and entitymap."entityID_id" in {} and published_date > %s {}
+                """.format(ids_str, EXTRA_INFO_AUTO)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date])
@@ -76,7 +101,7 @@ def user_portfolio(entity_ids):
     return rows
 
 
-def user_entity(entity_id):
+def user_entity(entity_id, mode):
     """
     query to filter stories based on the entity
     language and published date and then return
@@ -88,16 +113,30 @@ def user_entity(entity_id):
     start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
     start_date = "'{}'".format(start_date)
 
-    query = """
-            select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-            published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
-            title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
-            FROM public.apis_story as stry
-            inner join
-            (select * from apis_storybody as2 where status_code = 200) as stby
-            on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-            and "entityID_id" = {} and published_date > %s {}
-            """.format(id_str, EXTRA_INFO)
+    if mode == 'portfolio':
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
+                title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
+                FROM public.apis_story as stry
+                inner join
+                (select * from apis_storybody as2 where status_code = 200) as stby
+                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and "entityID_id" = {} and published_date > %s {}
+                """.format(id_str, EXTRA_INFO_PORT)
+    elif mode == "auto":
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, "domain", source_country, entitymap."entityID_id", ent."name", stry_bdy_tbl.body,
+                title_sntmnt.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                from apis_storyentitymap entitymap
+                inner join apis_story stry
+                on entitymap."storyID_id" = stry.uuid
+                inner join
+                (select * from apis_storybody as2 where status_code = 200) as stby
+                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and entitymap."entityID_id" = {} and published_date > %s {}
+                """.format(id_str, EXTRA_INFO_AUTO)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date])
@@ -105,7 +144,7 @@ def user_entity(entity_id):
     return rows
 
 
-def user_bucket(bucket_id, entity_ids, scenario_id):
+def user_bucket(bucket_id, entity_ids, scenario_id, mode):
     """
     given a bucket id, generate feed to score the articles
     """
@@ -118,21 +157,41 @@ def user_bucket(bucket_id, entity_ids, scenario_id):
 
     model_id = get_latest_model_uuid(scenario_id)
 
-    query = """
-            select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-            published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
-            "source", "grossScore", "sourceScore",title_sntmnt.sentiment as title_sentiment,
-            body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
-            inner join
-            (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-            (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
-            inner join
-            (select * from apis_source) src
-            on src.uuid = bktscr."sourceID_id") tbl
-            on stry.uuid = tbl."storyID_id"
-            and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s
-            and "entityID_id" in {} {}
-            """.format(bucket_id, model_id, entity_ids, EXTRA_INFO)
+    if mode == 'portfolio':
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
+                "source", "grossScore", "sourceScore",title_sntmnt.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
+                inner join
+                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                inner join
+                (select * from apis_source) src
+                on src.uuid = bktscr."sourceID_id") tbl
+                on stry.uuid = tbl."storyID_id"
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and "entityID_id" in {}
+                {}
+                """.format(bucket_id, model_id, entity_ids, EXTRA_INFO_PORT)
+    elif mode == "auto":
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, internal_source, "domain", source_country, entitymap."entityID_id", ent."name", "language",
+                "source", "grossScore", "sourceScore", title_sntmnt.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body
+                from apis_storyentitymap entitymap
+                inner join apis_story stry
+                on entitymap."storyID_id" = stry.uuid
+                inner join
+                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                inner join
+                (select * from apis_source) src
+                on src.uuid = bktscr."sourceID_id") tbl
+                on stry.uuid = tbl."storyID_id"
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and entitymap."entityID_id" in {}
+                {}
+                """.format(bucket_id, model_id, entity_ids, EXTRA_INFO_AUTO)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date])
@@ -140,7 +199,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id):
     return rows
 
 
-def user_entity_bucket(bucket_id, entity_id, scenario_id):
+def user_entity_bucket(bucket_id, entity_id, scenario_id, mode):
     """
     get all articles for a particular entity if it falls under
     a bucket
@@ -153,21 +212,41 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id):
     # get latest model version uuid
     model_id = get_latest_model_uuid(scenario_id)
 
-    query = """
-            select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-            published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
-            "source", "grossScore", "sourceScore",title_sntmnt.sentiment as title_sentiment,
-            body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
-            inner join
-            (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-            (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
-            inner join
-            (select * from apis_source) src
-            on src.uuid = bktscr."sourceID_id") tbl
-            on stry.uuid = tbl."storyID_id"
-            and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and "entityID_id" = {}
-            {}
-            """.format(bucket_id, model_id, entity_id, EXTRA_INFO)
+    if mode == 'portfolio':
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
+                "source", "grossScore", "sourceScore", title_sntmnt.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
+                inner join
+                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                inner join
+                (select * from apis_source) src
+                on src.uuid = bktscr."sourceID_id") tbl
+                on stry.uuid = tbl."storyID_id"
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and "entityID_id" = {}
+                {}
+                """.format(bucket_id, model_id, entity_id, EXTRA_INFO_PORT)
+    elif mode == "auto":
+        query = """
+                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
+                published_date, internal_source, "domain", source_country, entitymap."entityID_id", ent."name", "language",
+                "source", "grossScore", "sourceScore", title_sntmnt.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body
+                from apis_storyentitymap entitymap
+                inner join apis_story stry
+                on entitymap."storyID_id" = stry.uuid
+                inner join
+                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                inner join
+                (select * from apis_source) src
+                on src.uuid = bktscr."sourceID_id") tbl
+                on stry.uuid = tbl."storyID_id"
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and entitymap."entityID_id" = {}
+                {}
+                """.format(bucket_id, model_id, entity_id, EXTRA_INFO_AUTO)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date])

@@ -1,9 +1,7 @@
 import math
-
 import pandas as pd
 
 from datetime import datetime
-
 from .sql import story_entities
 
 
@@ -30,17 +28,21 @@ def presence_score(keyword, text, analytics_type):
         return score
 
 
-def hotness(article, bucket=False):
+def hotness(article, bucket, sentiment, mode):
     """
     adding to score if the company term is in title
     * domain score - domain reliability
     """
     s = article["title_sentiment"]["compound"]
 
-    keyword = article["search_keyword"]
+    if mode == "portfolio":
+        keyword = article["search_keyword"]
+    else:
+        keyword = article["name"]
 
-    # negative news
-    s = -s * 100
+    if sentiment:
+        # negative news
+        s = -s * 100
 
     # presence of keyword in title
     s += presence_score(keyword.lower(), article["title"].lower(), "title")
@@ -67,7 +69,7 @@ def hotness(article, bucket=False):
     return baseScore
 
 
-def score_in_bulk(articles, bucket=False):
+def score_in_bulk(articles, bucket=False, sentiment=True, mode="portfolio"):
     """
     convert db object into dictionary and cleans
     and scores the data
@@ -76,10 +78,7 @@ def score_in_bulk(articles, bucket=False):
     df = pd.DataFrame(list(articles))
 
     df["published_date"] = df["published_date"].dt.tz_localize(None)
-    if bucket:
-        df["hotness"] = df.apply(lambda x: hotness(x, bucket=True), axis=1)
-    else:
-        df["hotness"] = df.apply(hotness, axis=1)
+    df["hotness"] = df.apply(lambda x: hotness(x, bucket, sentiment, mode), axis=1)
 
     # use unique hash to eliminate duplicates
     df.drop_duplicates("unique_hash", inplace=True)
