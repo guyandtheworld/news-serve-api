@@ -130,7 +130,9 @@ class ListScenarioEntities(views.APIView):
                              "data": serializer.data},
                             status=status.HTTP_200_OK)
         msg = "no entities in the scenario"
-        return Response({"success": False, "data": msg})
+        return Response({"success": False, "data": msg},
+                        status=status.HTTP_404_NOT_FOUND
+                        )
 
 
 class AddToPortfolio(views.APIView):
