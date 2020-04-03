@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     "score",
     "entity",
     "viz",
-    "auto"
+    "auto",
+    "adminDash"
 ]
 
 MIDDLEWARE = [
