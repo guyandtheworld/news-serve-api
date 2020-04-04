@@ -3,11 +3,15 @@ from django.db import models
 from .users import STATUSES
 
 
+MODES = (("portfolio", "Portfolio"), ("auto", "Auto"))
+
+
 class Scenario(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUSES)
+    mode = models.CharField(max_length=10, choices=MODES)
     trackingDays = models.SmallIntegerField()
     entityType = models.ForeignKey("EntityType", on_delete=models.PROTECT)
 
