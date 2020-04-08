@@ -128,19 +128,23 @@ class SentimentViz(views.APIView):
                                    request.data["sentiment_type"],
                                    scenario_id=scenario.uuid,
                                    mode=mode)
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
             data = sentiment_query(
                 "bucket", bucket.uuid, request.data["sentiment_type"], bucket.scenarioID.uuid)
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
         else:
             msg = "no viz for this type"
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
+
+        # if sentiment is negative, return negative time series
+        if request.data["sentiment_type"] == "neg":
+            print("reversing")
+            for i in range(len(data)):
+                data[i][list(data[i].keys())[0]] = -data[i][list(data[i].keys())[0]]
+
+        return Response({"success": True, "length": len(data),
+                         "data": data},
+                        status=status.HTTP_200_OK)
