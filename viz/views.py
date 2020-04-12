@@ -1,5 +1,8 @@
+import pandas as pd
 from django.shortcuts import get_object_or_404
 
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from rest_framework import views
 from rest_framework.response import Response
@@ -7,10 +10,35 @@ from apis.models.users import DashUser
 from apis.models.entity import Entity, StoryEntityRef
 from apis.models.scenario import Bucket, Scenario
 
-from .sql import news_count_query, bucket_score_query, sentiment_query
+from .sql import (news_count_query,
+                  bucket_score_query,
+                  sentiment_query,
+                  get_entity_stories)
 
 
-class NewsCountViz(views.APIView):
+class GenericGET(views.APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def getStories(self, entity_uuid, data, mode, metric_label):
+        """
+        For each given date, fetch and attach top 10
+        relevant stories of the days depending on the
+        entity.
+        """
+        df = pd.DataFrame(data, columns=["date", metric_label])
+        dates = df['date'].apply(str).values
+
+        # fetch and attach stories for particular dates
+        stories = get_entity_stories(dates, entity_uuid, mode)
+        stories = pd.DataFrame(stories, columns=["date", "stories"])
+
+        df = df.merge(stories, how="left")
+        df.fillna("", inplace=True)
+        return df.to_dict('records')
+
+
+class NewsCountViz(GenericGET):
     """
     For a given entity or a bucket, get
     * News Count Per Day
@@ -26,17 +54,16 @@ class NewsCountViz(views.APIView):
 
         # viz for entities
         if request.data["type"] == 'entity':
+            entity_uuid = request.data["entity_uuid"]
             if mode == "portfolio":
                 entity = get_object_or_404(Entity,
-                                           uuid=request.data["entity_uuid"])
+                                           uuid=entity_uuid)
             else:
                 entity = get_object_or_404(StoryEntityRef,
-                                           uuid=request.data["entity_uuid"])
+                                           uuid=entity_uuid)
 
             data = news_count_query("entity", entity.uuid, mode=mode)
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
+            records = self.getStories(entity_uuid, data, mode, metric_label="count")
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,
@@ -51,8 +78,12 @@ class NewsCountViz(views.APIView):
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
 
+        return Response({"success": True, "length": len(records),
+                         "data": records},
+                        status=status.HTTP_200_OK)
 
-class BucketScoreViz(views.APIView):
+
+class BucketScoreViz(GenericGET):
     """
     For a given entity or a bucket, get
     * Normalized Bucket Score Per Day (all buckets)
@@ -69,21 +100,22 @@ class BucketScoreViz(views.APIView):
 
         # viz for entity and bucket
         if request.data["type"] == 'entity':
+            entity_uuid = request.data["entity_uuid"]
+
             if mode == "portfolio":
                 entity = get_object_or_404(Entity,
-                                           uuid=request.data["entity_uuid"])
+                                           uuid=entity_uuid)
             else:
                 entity = get_object_or_404(StoryEntityRef,
-                                           uuid=request.data["entity_uuid"])
+                                           uuid=entity_uuid)
 
             data = bucket_score_query("entity",
                                       bucket.uuid,
                                       entity.uuid,
                                       scenario_id=bucket.scenarioID.uuid)
 
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
+            records = self.getStories(entity_uuid, data, mode, metric_label="score")
+
         # viz for just buckets
         if request.data["type"] == 'bucket':
             data = bucket_score_query("bucket",
@@ -97,8 +129,12 @@ class BucketScoreViz(views.APIView):
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
 
+        return Response({"success": True, "length": len(records),
+                         "data": records},
+                        status=status.HTTP_200_OK)
 
-class SentimentViz(views.APIView):
+
+class SentimentViz(GenericGET):
     """
     For a given entity or a bucket, get
     * Normalized sentiment per day (compound/-ve/+ve)
@@ -116,24 +152,34 @@ class SentimentViz(views.APIView):
 
         # viz for entities
         if request.data["type"] == 'entity':
+            entity_uuid = request.data["entity_uuid"]
+
             if mode == "portfolio":
                 entity = get_object_or_404(Entity,
-                                           uuid=request.data["entity_uuid"])
+                                           uuid=entity_uuid)
             else:
                 entity = get_object_or_404(StoryEntityRef,
-                                           uuid=request.data["entity_uuid"])
+                                           uuid=entity_uuid)
 
             data = sentiment_query("entity",
                                    entity.uuid,
                                    request.data["sentiment_type"],
                                    scenario_id=scenario.uuid,
                                    mode=mode)
+
+            records = self.getStories(
+                entity_uuid, data, mode, metric_label="sentiment")
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
             data = sentiment_query(
                 "bucket", bucket.uuid, request.data["sentiment_type"], bucket.scenarioID.uuid)
+
+            return Response({"success": True, "length": len(data),
+                             "data": data},
+                            status=status.HTTP_200_OK)
+
         else:
             msg = "no viz for this type"
             return Response({"success": False, "data": msg},
@@ -141,10 +187,9 @@ class SentimentViz(views.APIView):
 
         # if sentiment is negative, return negative time series
         if request.data["sentiment_type"] == "neg":
-            print("reversing")
-            for i in range(len(data)):
-                data[i][list(data[i].keys())[0]] = -data[i][list(data[i].keys())[0]]
+            for i in range(len(records)):
+                records[i]["sentiment"] = -records[i]["sentiment"]
 
-        return Response({"success": True, "length": len(data),
-                         "data": data},
+        return Response({"success": True, "length": len(records),
+                         "data": records},
                         status=status.HTTP_200_OK)

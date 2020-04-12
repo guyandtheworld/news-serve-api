@@ -7,8 +7,7 @@ PORTFOLIO_DAYS = 150
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     return [
-        {str(row[0]): row[1]}
-        for row in cursor.fetchall()
+        row for row in cursor.fetchall()
     ]
 
 
@@ -151,6 +150,34 @@ def bucket_score_query(viz_type, bucket_id, entity_id=None, scenario_id=None):
                 and ab."bucketID_id"='{}'
                 group by 1 order by 1
                 """.format(model_id, bucket_id)
+
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        rows = dictfetchall(cursor)
+    return rows
+
+
+def get_entity_stories(dates, entity_id, mode):
+    dates_str = "', '".join(dates)
+    dates_str = "('{}')".format(dates_str)
+
+    if mode == "portfolio":
+        query = """
+                select published_date::date, (array_agg(json_build_array(url, title)))[0:10] article from
+                (select distinct url, title, published_date from apis_story stry
+                where published_date::date in {}
+                and "entityID_id" = '{}') tbl
+                group by 1 order by 1
+                """.format(dates_str, entity_id)
+    elif mode == "auto":
+        query = """
+                select published_date::date, (array_agg(json_build_array(url, title)))[0:10] article from
+                (select distinct url, title, published_date from apis_storyentitymap mp
+                left join apis_story stry on mp."storyID_id"=stry.uuid
+                where published_date::date in {}
+                and mp."entityID_id" = '{}') tbl
+                group by 1 order by 1
+                """.format(dates_str, entity_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query)
