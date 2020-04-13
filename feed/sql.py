@@ -1,5 +1,4 @@
 from django.db import connection
-from datetime import datetime, timedelta
 
 
 PORTFOLIO_DAYS = 150
@@ -56,8 +55,7 @@ def get_latest_model_uuid(scenario):
         row = cursor.fetchone()
     return str(row[0])
 
-
-def user_portfolio(entity_ids, mode):
+def user_portfolio(entity_ids, dates, mode):
     """
     query to filter stories based on the portfolio
     language and published date and then return
@@ -67,8 +65,8 @@ def user_portfolio(entity_ids, mode):
 
     ids_str = "', '".join(entity_ids)
     ids_str = "('{}')".format(ids_str)
-    start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
-    start_date = "'{}'".format(start_date)
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
 
     if mode == 'portfolio':
         query = """
@@ -79,7 +77,8 @@ def user_portfolio(entity_ids, mode):
                 inner join
                 (select * from apis_storybody as2 where status_code = 200) as stby
                 on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and "entityID_id" in {} and published_date > %s {}
+                and "entityID_id" in {}
+                and published_date > %s and published_date <= %s {}
             """.format(ids_str, EXTRA_INFO_PORT)
     elif mode == "auto":
         query = """
@@ -92,16 +91,16 @@ def user_portfolio(entity_ids, mode):
                 inner join
                 (select * from apis_storybody as2 where status_code = 200) as stby
                 on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and entitymap."entityID_id" in {} and published_date > %s {}
+                and entitymap."entityID_id" in {}
+                and published_date > %s and published_date <= %s {}
                 """.format(ids_str, EXTRA_INFO_AUTO)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [start_date])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
-
-def user_entity(entity_id, mode):
+def user_entity(entity_id, dates, mode):
     """
     query to filter stories based on the entity
     language and published date and then return
@@ -110,9 +109,8 @@ def user_entity(entity_id, mode):
     """
 
     id_str = "'{}'".format(entity_id)
-    start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
-    start_date = "'{}'".format(start_date)
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     if mode == 'portfolio':
         query = """
                 select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
@@ -122,7 +120,8 @@ def user_entity(entity_id, mode):
                 inner join
                 (select * from apis_storybody as2 where status_code = 200) as stby
                 on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and "entityID_id" = {} and published_date > %s {}
+                and "entityID_id" = {}
+                and published_date > %s and published_date <= %s {}
                 """.format(id_str, EXTRA_INFO_PORT)
     elif mode == "auto":
         query = """
@@ -135,26 +134,27 @@ def user_entity(entity_id, mode):
                 inner join
                 (select * from apis_storybody as2 where status_code = 200) as stby
                 on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and entitymap."entityID_id" = {} and published_date > %s {}
+                and entitymap."entityID_id" = {}
+                and published_date > %s and published_date <= %s {}
                 """.format(id_str, EXTRA_INFO_AUTO)
-
     with connection.cursor() as cursor:
-        cursor.execute(query, [start_date])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def user_bucket(bucket_id, entity_ids, scenario_id, mode):
+def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
+
     """
     given a bucket id, generate feed to score the articles
     """
-    start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
-    start_date = "'{}'".format(start_date)
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     bucket_id = "'{}'".format(bucket_id)
 
     ids_str = "', '".join(entity_ids)
     entity_ids = "('{}')".format(ids_str)
-
+    
     model_id = get_latest_model_uuid(scenario_id)
 
     if mode == 'portfolio':
@@ -170,7 +170,9 @@ def user_bucket(bucket_id, entity_ids, scenario_id, mode):
                 (select * from apis_source) src
                 on src.uuid = bktscr."sourceID_id") tbl
                 on stry.uuid = tbl."storyID_id"
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and "entityID_id" in {}
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and published_date > %s and published_date <= %s
+                and "entityID_id" in {}
                 {}
                 """.format(bucket_id, model_id, entity_ids, EXTRA_INFO_PORT)
     elif mode == "auto":
@@ -189,25 +191,27 @@ def user_bucket(bucket_id, entity_ids, scenario_id, mode):
                 (select * from apis_source) src
                 on src.uuid = bktscr."sourceID_id") tbl
                 on stry.uuid = tbl."storyID_id"
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and entitymap."entityID_id" in {}
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and published_date > %s and published_date <= %s
+                and "entityID_id" in {}
                 {}
                 """.format(bucket_id, model_id, entity_ids, EXTRA_INFO_AUTO)
-
     with connection.cursor() as cursor:
-        cursor.execute(query, [start_date])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def user_entity_bucket(bucket_id, entity_id, scenario_id, mode):
+
+def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
     """
     get all articles for a particular entity if it falls under
     a bucket
     """
     bucket_id = "'{}'".format(bucket_id)
     entity_id = "'{}'".format(entity_id)
-    start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
-    start_date = "'{}'".format(start_date)
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
 
     # get latest model version uuid
     model_id = get_latest_model_uuid(scenario_id)
@@ -225,7 +229,9 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, mode):
                 (select * from apis_source) src
                 on src.uuid = bktscr."sourceID_id") tbl
                 on stry.uuid = tbl."storyID_id"
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and "entityID_id" = {}
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and published_date > %s and published_date <= %s
+                and "entityID_id" = {}
                 {}
                 """.format(bucket_id, model_id, entity_id, EXTRA_INFO_PORT)
     elif mode == "auto":
@@ -244,12 +250,14 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, mode):
                 (select * from apis_source) src
                 on src.uuid = bktscr."sourceID_id") tbl
                 on stry.uuid = tbl."storyID_id"
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE') and published_date > %s and entitymap."entityID_id" = {}
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and published_date > %s and published_date <= %s
+                and "entityID_id" = {}
                 {}
                 """.format(bucket_id, model_id, entity_id, EXTRA_INFO_AUTO)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [start_date])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
@@ -273,5 +281,4 @@ def story_entities(story_ids):
     with connection.cursor() as cursor:
         cursor.execute(query)
         rows = dictfetchall(cursor)
-
     return rows

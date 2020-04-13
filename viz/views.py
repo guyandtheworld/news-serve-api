@@ -7,8 +7,11 @@ from rest_framework import status
 from rest_framework import views
 from rest_framework.response import Response
 from apis.models.users import DashUser
+
 from apis.models.entity import Entity, StoryEntityRef
 from apis.models.scenario import Bucket, Scenario
+from apis.utils import extract_timeperiod
+
 
 from .sql import (news_count_query,
                   bucket_score_query,
@@ -46,7 +49,8 @@ class NewsCountViz(GenericGET):
 
     def post(self, request, format=None):
         get_object_or_404(DashUser, uuid=request.data["user"])
-
+        dates = extract_timeperiod(request)
+        # viz for entities
         if "mode" in request.data:
             mode = request.data["mode"]
         else:
@@ -62,13 +66,14 @@ class NewsCountViz(GenericGET):
                 entity = get_object_or_404(StoryEntityRef,
                                            uuid=entity_uuid)
 
-            data = news_count_query("entity", entity.uuid, mode=mode)
+            data = news_count_query("entity", entity.uuid, dates, mode=mode)
             records = self.getStories(entity_uuid, data, mode, metric_label="count")
+
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
-            data = news_count_query("bucket", bucket.uuid,
+            data = news_count_query("bucket", bucket.uuid, dates,
                                     bucket.scenarioID.uuid)
             return Response({"success": True, "length": len(data),
                              "data": data},
@@ -92,12 +97,11 @@ class BucketScoreViz(GenericGET):
     def post(self, request, format=None):
         get_object_or_404(DashUser, uuid=request.data["user"])
         bucket = get_object_or_404(Bucket, uuid=request.data['bucket_uuid'])
-
+        dates = extract_timeperiod(request)
         if "mode" in request.data:
             mode = request.data["mode"]
         else:
             mode = "portfolio"
-
         # viz for entity and bucket
         if request.data["type"] == 'entity':
             entity_uuid = request.data["entity_uuid"]
@@ -111,6 +115,7 @@ class BucketScoreViz(GenericGET):
 
             data = bucket_score_query("entity",
                                       bucket.uuid,
+                                      dates,
                                       entity.uuid,
                                       scenario_id=bucket.scenarioID.uuid)
 
@@ -120,6 +125,7 @@ class BucketScoreViz(GenericGET):
         if request.data["type"] == 'bucket':
             data = bucket_score_query("bucket",
                                       bucket.uuid,
+                                      dates,
                                       scenario_id=bucket.scenarioID.uuid)
             return Response({"success": True, "length": len(data),
                              "data": data},
@@ -144,7 +150,7 @@ class SentimentViz(GenericGET):
 
         get_object_or_404(DashUser, uuid=request.data["user"])
         scenario = get_object_or_404(Scenario, uuid=request.data["scenario_uuid"])
-
+        dates = extract_timeperiod(request)
         if "mode" in request.data:
             mode = request.data["mode"]
         else:
@@ -164,6 +170,7 @@ class SentimentViz(GenericGET):
             data = sentiment_query("entity",
                                    entity.uuid,
                                    request.data["sentiment_type"],
+                                   dates,
                                    scenario_id=scenario.uuid,
                                    mode=mode)
 
@@ -174,8 +181,7 @@ class SentimentViz(GenericGET):
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
             data = sentiment_query(
-                "bucket", bucket.uuid, request.data["sentiment_type"], bucket.scenarioID.uuid)
-
+                "bucket", bucket.uuid, request.data["sentiment_type"], dates, bucket.scenarioID.uuid)
             return Response({"success": True, "length": len(data),
                              "data": data},
                             status=status.HTTP_200_OK)

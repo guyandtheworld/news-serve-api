@@ -18,6 +18,7 @@ from .sql import (portfolio_score, bucket_score,
 from .utils import (get_gross_entity_score,
                     get_gross_bucket_scores,
                     get_gross_sentiment_scores)
+from apis.utils import extract_timeperiod
 
 
 class GenericGET(views.APIView):
@@ -87,16 +88,16 @@ class GetPortfolioScore(GenericGET):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
-
+        dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
             message = "user is not subscribed to the scenario"
             return Response({"success": False, "message": message})
-
         if "mode" in request.data:
             mode = request.data["mode"]
         else:
             mode = "portfolio"
+
 
         if user and scenario:
             portfolio = []
@@ -124,7 +125,7 @@ class GetPortfolioScore(GenericGET):
                 portfolio, entity_ids = self.getEntitiesFromAuto(
                     request, scenario.uuid)
 
-            entity_scores = portfolio_score(entity_ids, scenario.uuid)
+            entity_scores = portfolio_score(entity_ids, scenario.uuid, dates)
             scores = self.getScores(entity_scores, portfolio)
 
             return Response({"success": True,
@@ -146,7 +147,7 @@ class GetSentiment(GenericGET):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
-
+        dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
             message = "user is not subscribed to the scenario"
@@ -180,7 +181,7 @@ class GetSentiment(GenericGET):
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
                 _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
-            entity_scores = portfolio_sentiment(entity_ids, mode)
+            entity_scores = portfolio_sentiment(entity_ids, dates, mode)
 
             scores = get_gross_sentiment_scores(entity_scores)
 
@@ -203,7 +204,7 @@ class GetNewsCount(GenericGET):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
-
+        dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
             message = "user is not subscribed to the scenario"
@@ -215,6 +216,7 @@ class GetNewsCount(GenericGET):
             mode = "portfolio"
 
         if user and scenario:
+
             if mode == "portfolio" or mode is None:
 
                 query = """
@@ -239,7 +241,7 @@ class GetNewsCount(GenericGET):
             elif mode == "auto":
                 _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
 
-            counts = portfolio_count(entity_ids, mode)
+            counts = portfolio_count(entity_ids, dates,mode)
 
             return Response({"success": True,
                              "samples": len(counts),
@@ -260,7 +262,7 @@ class GetBucketScore(GenericGET):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
-
+        dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
             message = "user is not subscribed to the scenario"
@@ -278,7 +280,7 @@ class GetBucketScore(GenericGET):
                                 status=status.HTTP_404_NOT_FOUND)
 
             bucket_ids = [str(b.uuid) for b in buckets]
-            bucket_scores = bucket_score(bucket_ids, scenario.uuid)
+            bucket_scores = bucket_score(bucket_ids, scenario.uuid, dates)
 
             # if no scores return 0
             scores = []
@@ -317,7 +319,7 @@ class GetEntityBucketScore(GenericGET):
             request, "scenario", "uuid", Scenario)
         entity = self.getSingleObjectFromPOST(
             request, "entity", "uuid", StoryEntityRef)
-
+        dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
         if user.defaultScenario != scenario:
             message = "user is not subscribed to the scenario"
@@ -334,7 +336,7 @@ class GetEntityBucketScore(GenericGET):
                 return Response({"success": True, "data": message},
                                 status=status.HTTP_404_NOT_FOUND)
 
-            entity_scores = entity_bucket_score(entity.uuid, scenario.uuid)
+            entity_scores = entity_bucket_score(entity.uuid, scenario.uuid, dates)
 
             # if no scores return 0
             scores = []

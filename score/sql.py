@@ -1,12 +1,4 @@
 from django.db import connection
-from datetime import datetime, timedelta
-
-
-PORTFOLIO_DAYS = 150
-
-start_date = datetime.now() - timedelta(days=PORTFOLIO_DAYS)
-START_DATE = "'{}'".format(start_date)
-
 
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
@@ -36,7 +28,7 @@ def get_latest_model_uuid(scenario):
         return False
 
 
-def portfolio_score(entity_ids, scenario_id):
+def portfolio_score(entity_ids, scenario_id, dates):
     """
     Returns GrossScore, bucket and timedelta from published date for
     aggregate GrossScore creation where bucket is other
@@ -44,7 +36,8 @@ def portfolio_score(entity_ids, scenario_id):
 
     entity_ids = "', '".join(entity_ids)
     entity_ids = "('{}')".format(entity_ids)
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     model_id = get_latest_model_uuid(scenario_id)
 
     if not model_id:
@@ -64,22 +57,23 @@ def portfolio_score(entity_ids, scenario_id):
             where ae."entityID_id" in {}
             and model_label != 'other'
             and "modelID_id" = {}
-            and published_date > %s
+            and published_date > %s and published_date <= %s
             """.format(entity_ids, model_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [START_DATE])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def bucket_score(bucket_ids, scenario_id):
+def bucket_score(bucket_ids, scenario_id, dates):
     """
     Returns GrossScore for each Bucket, bucket and timedelta
     from published date for aggregate GrossScore creation
     where bucket is not other
     """
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     bucket_ids = "', '".join(bucket_ids)
     bucket_ids = "('{}')".format(bucket_ids)
 
@@ -99,21 +93,22 @@ def bucket_score(bucket_ids, scenario_id):
             on ae."bucketID_id" = bckt.uuid
             where "bucketID_id" in {}
             and "modelID_id" = {}
-            and published_date > %s
+            and published_date > %s and published_date <= %s
             """.format(bucket_ids, model_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [START_DATE])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def entity_bucket_score(entity_id, scenario_id):
+def entity_bucket_score(entity_id, scenario_id, dates):
     """
     Returns GrossScore, bucket and timedelta for
     a given entity
     """
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     model_id = get_latest_model_uuid(scenario_id)
 
     if not model_id:
@@ -131,22 +126,25 @@ def entity_bucket_score(entity_id, scenario_id):
             where ae."entityID_id" = %s
             and "modelID_id" = {}
             and model_label != 'other'
-            and published_date > %s
+            and published_date > %s and published_date <= %s
             """.format(model_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [entity_id, START_DATE])
+        cursor.execute(query, [entity_id, start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def portfolio_count(entity_ids, mode):
+
+def portfolio_count(entity_ids, dates, mode):
     """
     Returns news count for a user's portfolio
     """
 
     entity_ids = "', '".join(entity_ids)
     entity_ids = "('{}')".format(entity_ids)
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
 
     if mode == "portfolio":
         query = """
@@ -155,6 +153,7 @@ def portfolio_count(entity_ids, mode):
                 apis_story as2 group by "entityID_id") grby
                 inner join apis_entity entty on grby."entityID_id" = entty.uuid
                 where entty.uuid in {}
+                and published_date > %s and published_date <= %s
                 """.format(entity_ids)
     else:
         query = """
@@ -163,19 +162,20 @@ def portfolio_count(entity_ids, mode):
                 apis_storyentitymap as2 group by "entityID_id") grby
                 inner join apis_storyentityref entty on grby."entityID_id" = entty.uuid
                 where entty.uuid in {}
+                and published_date > %s and published_date <= %s
                 """.format(entity_ids)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [START_DATE])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
-
-def portfolio_sentiment(entity_ids, mode):
+def portfolio_sentiment(entity_ids, dates, mode):
     """
     Returns news count for a user's portfolio
     """
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     entity_ids = "', '".join(entity_ids)
     entity_ids = "('{}')".format(entity_ids)
 
@@ -190,7 +190,7 @@ def portfolio_sentiment(entity_ids, mode):
                 inner join apis_storyentityref entty
                 on "entityID_id" = entty.uuid
                 where entty.uuid in {}
-                and published_date > %s
+                and published_date > %s and published_date <= %s
                 """.format(entity_ids)
     else:
         query = """
@@ -205,10 +205,10 @@ def portfolio_sentiment(entity_ids, mode):
                 inner join apis_storysentiment stysent
                 on stysent."storyID_id" = sty.uuid
                 where as2."entityID_id" in {}
-                and published_date > %s
+                and published_date > %s and published_date <= %s
                 """.format(entity_ids)
 
     with connection.cursor() as cursor:
-        cursor.execute(query, [START_DATE])
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows

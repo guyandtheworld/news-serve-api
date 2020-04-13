@@ -26,19 +26,20 @@ def get_latest_model_uuid(scenario):
         row = cursor.fetchone()
     return str(row[0])
 
-
-def news_count_query(viz_type, uuid, scenario_id=None, mode=None):
+def news_count_query(viz_type, uuid, dates, scenario_id=None, mode=None):
     """
     query to fetch the news count per day of
     * an entity
     * a bucket with grossScore > .2
     """
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     if viz_type == "entity":
         if mode == "portfolio":
             query = """
                     select published_date::date, count(*) from apis_story as2
                     where "entityID_id" = '{}'
+                    and published_date > %s and published_date <= %s
                     group by 1 order by 1
                     """.format(uuid)
         else:
@@ -47,6 +48,7 @@ def news_count_query(viz_type, uuid, scenario_id=None, mode=None):
                     left join apis_story sty
                     on sty.uuid = as3."storyID_id"
                     where as3."entityID_id" = '{}'
+                    and published_date > %s and published_date <= %s
                     group by 1 order by 1
                     """.format(uuid)
     elif viz_type == "bucket":
@@ -59,22 +61,24 @@ def news_count_query(viz_type, uuid, scenario_id=None, mode=None):
                 where ae."bucketID_id"='{}'
                 and ae."modelID_id" = '{}'
                 and ae."grossScore" > .2
+                and published_date > %s and published_date <= %s
                 group by 1 order by 1
                 """.format(uuid, model_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None, mode=None):
+def sentiment_query(viz_type, uuid, sentiment_type, dates, scenario_id=None, mode=None):
     """
     query to fetch the sentiment per day of
     * an entity
     * a bucket with grossScore > .2
     """
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     if viz_type == "entity":
         if mode == "portfolio":
             query = """
@@ -85,6 +89,7 @@ def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None, mode=None)
                     inner join apis_storysentiment sent
                     on as2.uuid=sent."storyID_id"
                     where "entityID_id" = '{}') sem
+                    and published_date > %s and published_date <= %s
                     group by 1 order by 1
                     """.format(sentiment_type, uuid)
         else:
@@ -99,6 +104,7 @@ def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None, mode=None)
                     inner join apis_storysentiment sent
                     on sty.uuid=sent."storyID_id"
                     where as3."entityID_id" = '{}') sem
+                    and published_date > %s and published_date <= %s
                     group by 1 order by 1
                     """.format(sentiment_type, uuid)
     elif viz_type == "bucket":
@@ -114,22 +120,24 @@ def sentiment_query(viz_type, uuid, sentiment_type, scenario_id=None, mode=None)
                 where ae."bucketID_id"='{}'
                 and ae."modelID_id" = '{}'
                 and ae."grossScore" > .2) snt
+                and published_date > %s and published_date <= %s
                 group by 1 order by 1
                 """.format(sentiment_type, uuid, model_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
 
-def bucket_score_query(viz_type, bucket_id, entity_id=None, scenario_id=None):
+def bucket_score_query(viz_type, bucket_id, dates, entity_id=None, scenario_id=None):
     """
     query to fetch the bucket score per day of
     * an entity
     * a bucket with grossScore > .2
     """
-
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
     if viz_type == "entity":
         model_id = get_latest_model_uuid(scenario_id)
         query = """
@@ -139,6 +147,7 @@ def bucket_score_query(viz_type, bucket_id, entity_id=None, scenario_id=None):
                 where ae."entityID_id" = '{}'
                 and ae."modelID_id" = '{}'
                 and ae."bucketID_id"='{}'
+                and published_date > %s and published_date <= %s
                 group by 1 order by 1
                 """.format(entity_id, model_id, bucket_id)
     elif viz_type == "bucket":
@@ -148,11 +157,12 @@ def bucket_score_query(viz_type, bucket_id, entity_id=None, scenario_id=None):
                 from apis_bucketscore ab
                 where ab."modelID_id" = '{}'
                 and ab."bucketID_id"='{}'
+                and published_date > %s and published_date <= %s
                 group by 1 order by 1
                 """.format(model_id, bucket_id)
 
     with connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
 
