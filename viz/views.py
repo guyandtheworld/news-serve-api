@@ -29,6 +29,8 @@ class GenericGET(views.APIView):
         relevant stories of the days depending on the
         entity.
         """
+        if len(data) == 0:
+            return []
         df = pd.DataFrame(data, columns=["date", metric_label])
         dates = df['date'].apply(str).values
 
@@ -68,7 +70,6 @@ class NewsCountViz(GenericGET):
 
             data = news_count_query("entity", entity.uuid, dates, mode=mode)
             records = self.getStories(entity_uuid, data, mode, metric_label="count")
-
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,

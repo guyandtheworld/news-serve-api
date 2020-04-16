@@ -1,9 +1,6 @@
 from django.db import connection
 
 
-PORTFOLIO_DAYS = 150
-
-
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     return [
@@ -25,6 +22,7 @@ def get_latest_model_uuid(scenario):
         cursor.execute(query)
         row = cursor.fetchone()
     return str(row[0])
+
 
 def news_count_query(viz_type, uuid, dates, scenario_id=None, mode=None):
     """

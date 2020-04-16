@@ -1,33 +1,37 @@
 from django.db import connection
 
 
-PORTFOLIO_DAYS = 150
-
 # get entity name, and story body
 # get entities from title and body
 # get sentiment from title and body
 EXTRA_INFO_PORT = """
-            inner join apis_entity ent on stry."entityID_id" = ent.uuid
-            inner join (select "storyID_id", body from apis_storybody) stry_bdy_tbl
-            on stry_bdy_tbl."storyID_id" = stry.uuid
+            inner join apis_entity entity on story."entityID_id" = entity.uuid
+            inner join (select "storyID_id", (array_agg(body))[1] as body
+            from apis_storybody group by "storyID_id") story_body
+            on story.uuid = story_body."storyID_id"
             inner join
-            (select "storyID_id", sentiment from apis_storysentiment where is_headline = true) title_sntmnt
-            on title_sntmnt."storyID_id" = stry.uuid
-            left join
-            (select "storyID_id", sentiment from apis_storysentiment where is_headline = false) body_sentiment
-            on body_sentiment."storyID_id" = stry.uuid
+            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
+            from apis_storysentiment where is_headline = true group by "storyID_id") title_sentiment
+            on story.uuid = title_sentiment."storyID_id"
+            inner join
+            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
+            from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
+            on story.uuid = body_sentiment."storyID_id"
             """
 
 EXTRA_INFO_AUTO = """
-            inner join apis_storyentityref ent on entitymap."entityID_id" = ent.uuid
-            inner join (select "storyID_id", body from apis_storybody) stry_bdy_tbl
-            on stry_bdy_tbl."storyID_id" = stry.uuid
+            inner join apis_storyentityref entref on entitymap."entityID_id" = entref.uuid
+            inner join (select "storyID_id", (array_agg(body))[1] as body
+            from apis_storybody group by "storyID_id") story_body
+            on entitymap."storyID_id" = story_body."storyID_id"
             inner join
-            (select "storyID_id", sentiment from apis_storysentiment where is_headline = true) title_sntmnt
-            on title_sntmnt."storyID_id" = stry.uuid
-            left join
-            (select "storyID_id", sentiment from apis_storysentiment where is_headline = false) body_sentiment
-            on body_sentiment."storyID_id" = stry.uuid
+            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
+            from apis_storysentiment where is_headline = true group by "storyID_id") title_sentiment
+            on entitymap."storyID_id" = title_sentiment."storyID_id"
+            inner join
+            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
+            from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
+            on entitymap."storyID_id" = body_sentiment."storyID_id"
             """
 
 
@@ -55,6 +59,7 @@ def get_latest_model_uuid(scenario):
         row = cursor.fetchone()
     return str(row[0])
 
+
 def user_portfolio(entity_ids, dates, mode):
     """
     query to filter stories based on the portfolio
@@ -70,35 +75,34 @@ def user_portfolio(entity_ids, dates, mode):
 
     if mode == 'portfolio':
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
-                title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
-                FROM public.apis_story as stry
-                inner join
-                (select * from apis_storybody as2 where status_code = 200) as stby
-                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
+                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                FROM public.apis_story as story
+                {}
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and "entityID_id" in {}
-                and published_date > %s and published_date <= %s {}
-            """.format(ids_str, EXTRA_INFO_PORT)
+                and published_date > %s and published_date <= %s
+            """.format(EXTRA_INFO_PORT, ids_str)
     elif mode == "auto":
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, "domain", source_country, entitymap."entityID_id", ent."name", stry_bdy_tbl.body,
-                title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
-                from apis_storyentitymap entitymap
-                inner join apis_story stry
-                on entitymap."storyID_id" = stry.uuid
-                inner join
-                (select * from apis_storybody as2 where status_code = 200) as stby
-                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, "domain", source_country, entitymap."entityID_id", entref."name", story_body.body,
+                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                from  apis_storyentitymap entitymap
+                inner join apis_story story on entitymap."storyID_id" = story.uuid
+                {}
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" in {}
-                and published_date > %s and published_date <= %s {}
-                """.format(ids_str, EXTRA_INFO_AUTO)
-
+                and story_body.body is not null
+                and published_date > %s and published_date <= %s
+                """.format(EXTRA_INFO_AUTO, ids_str)
+    print(query)
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
+
 
 def user_entity(entity_id, dates, mode):
     """
@@ -113,30 +117,27 @@ def user_entity(entity_id, dates, mode):
     end_date = "'{}'".format(dates[1])
     if mode == 'portfolio':
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, "domain", source_country, "entityID_id", ent."name", stry_bdy_tbl.body,
-                title_sntmnt.sentiment as title_sentiment,body_sentiment.sentiment as body_sentiment
-                FROM public.apis_story as stry
-                inner join
-                (select * from apis_storybody as2 where status_code = 200) as stby
-                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
+                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                FROM public.apis_story as story
+                {}
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and "entityID_id" = {}
-                and published_date > %s and published_date <= %s {}
-                """.format(id_str, EXTRA_INFO_PORT)
+                and published_date > %s and published_date <= %s
+                """.format(EXTRA_INFO_PORT, id_str)
     elif mode == "auto":
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, "domain", source_country, entitymap."entityID_id", ent."name", stry_bdy_tbl.body,
-                title_sntmnt.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
-                from apis_storyentitymap entitymap
-                inner join apis_story stry
-                on entitymap."storyID_id" = stry.uuid
-                inner join
-                (select * from apis_storybody as2 where status_code = 200) as stby
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, "domain", source_country, entitymap."entityID_id", entref."name", story_body.body,
+                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                from  apis_storyentitymap entitymap
+                inner join apis_story story on entitymap."storyID_id" = story.uuid
+                {}
                 on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" = {}
-                and published_date > %s and published_date <= %s {}
-                """.format(id_str, EXTRA_INFO_AUTO)
+                and published_date > %s and published_date <= %s
+                """.format(EXTRA_INFO_AUTO, id_str)
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
@@ -144,7 +145,6 @@ def user_entity(entity_id, dates, mode):
 
 
 def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
-
     """
     given a bucket id, generate feed to score the articles
     """
@@ -154,53 +154,52 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
 
     ids_str = "', '".join(entity_ids)
     entity_ids = "('{}')".format(ids_str)
-    
+
     model_id = get_latest_model_uuid(scenario_id)
 
     if mode == 'portfolio':
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
-                "source", "grossScore", "sourceScore",title_sntmnt.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
+                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
                 inner join
                 (select * from apis_source) src
-                on src.uuid = bktscr."sourceID_id") tbl
-                on stry.uuid = tbl."storyID_id"
+                on src.uuid = bucket_score."sourceID_id") tbl
+                on story.uuid = tbl."storyID_id"
+                {}
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and "entityID_id" in {}
-                {}
-                """.format(bucket_id, model_id, entity_ids, EXTRA_INFO_PORT)
+                """.format(bucket_id, model_id, EXTRA_INFO_PORT, entity_ids)
     elif mode == "auto":
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, internal_source, "domain", source_country, entitymap."entityID_id", ent."name", "language",
-                "source", "grossScore", "sourceScore", title_sntmnt.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, internal_source, "domain", source_country, entitymap."entityID_id", entref."name", "language",
+                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, story_body.body
                 from apis_storyentitymap entitymap
-                inner join apis_story stry
-                on entitymap."storyID_id" = stry.uuid
+                inner join apis_story story
+                on entitymap."storyID_id" = story.uuid
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
                 inner join
                 (select * from apis_source) src
-                on src.uuid = bktscr."sourceID_id") tbl
-                on stry.uuid = tbl."storyID_id"
+                on src.uuid = bucket_score."sourceID_id") tbl
+                on story.uuid = tbl."storyID_id"
+                {}
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and "entityID_id" in {}
-                {}
-                """.format(bucket_id, model_id, entity_ids, EXTRA_INFO_AUTO)
+                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_ids)
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
-
 
 
 def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
@@ -218,43 +217,43 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
 
     if mode == 'portfolio':
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, internal_source, "domain", source_country, "entityID_id", ent."name", "language",
-                "source", "grossScore", "sourceScore", title_sntmnt.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body from apis_story stry
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
+                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
                 inner join
                 (select * from apis_source) src
-                on src.uuid = bktscr."sourceID_id") tbl
-                on stry.uuid = tbl."storyID_id"
+                on src.uuid = bucket_score."sourceID_id") tbl
+                on story.uuid = tbl."storyID_id"
+                {}
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and "entityID_id" = {}
-                {}
-                """.format(bucket_id, model_id, entity_id, EXTRA_INFO_PORT)
+                """.format(bucket_id, model_id, EXTRA_INFO_PORT, entity_id)
     elif mode == "auto":
         query = """
-                select distinct unique_hash, stry.uuid, title, stry.url, search_keyword,
-                published_date, internal_source, "domain", source_country, entitymap."entityID_id", ent."name", "language",
-                "source", "grossScore", "sourceScore", title_sntmnt.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, stry_bdy_tbl.body
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, internal_source, "domain", source_country, entitymap."entityID_id", entref."name", "language",
+                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, story_body.body
                 from apis_storyentitymap entitymap
-                inner join apis_story stry
-                on entitymap."storyID_id" = stry.uuid
+                inner join apis_story story
+                on entitymap."storyID_id" = story.uuid
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bktscr
+                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
                 inner join
                 (select * from apis_source) src
-                on src.uuid = bktscr."sourceID_id") tbl
-                on stry.uuid = tbl."storyID_id"
+                on src.uuid = bucket_score."sourceID_id") tbl
+                on story.uuid = tbl."storyID_id"
+                {}
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and "entityID_id" = {}
-                {}
-                """.format(bucket_id, model_id, entity_id, EXTRA_INFO_AUTO)
+                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])

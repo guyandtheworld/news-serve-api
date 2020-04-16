@@ -1,5 +1,6 @@
 from django.db import connection
 
+
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     columns = [col[0] for col in cursor.description]
@@ -135,7 +136,6 @@ def entity_bucket_score(entity_id, scenario_id, dates):
     return rows
 
 
-
 def portfolio_count(entity_ids, dates, mode):
     """
     Returns news count for a user's portfolio
@@ -150,25 +150,30 @@ def portfolio_count(entity_ids, dates, mode):
         query = """
                 select entty.name, entty.uuid, news_count from
                 (select "entityID_id", count(*) as news_count from
-                apis_story as2 group by "entityID_id") grby
+                apis_story as2 where published_date > %s and published_date <= %s
+                group by "entityID_id") grby
                 inner join apis_entity entty on grby."entityID_id" = entty.uuid
                 where entty.uuid in {}
-                and published_date > %s and published_date <= %s
                 """.format(entity_ids)
     else:
         query = """
                 select entty.name, entty.uuid, news_count from
-                (select "entityID_id", count(*) as news_count from
-                apis_storyentitymap as2 group by "entityID_id") grby
+                (select "entityID_id", count(*) as news_count
+                from apis_storyentitymap as2
+                inner join
+                (select uuid, published_date from apis_story where
+                published_date > %s and published_date <= %s) story
+                on as2."storyID_id" = story.uuid
+                group by "entityID_id") grby
                 inner join apis_storyentityref entty on grby."entityID_id" = entty.uuid
                 where entty.uuid in {}
-                and published_date > %s and published_date <= %s
                 """.format(entity_ids)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
     return rows
+
 
 def portfolio_sentiment(entity_ids, dates, mode):
     """

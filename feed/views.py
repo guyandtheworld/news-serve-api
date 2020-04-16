@@ -15,8 +15,6 @@ from apis.models.entity import Entity, StoryEntityRef
 
 from auto.utils import get_scenario_entity_count
 
-from auto.utils import get_scenario_entity_count
-
 from .utils import score_in_bulk, attach_story_entities
 from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket
 from apis.utils import extract_timeperiod
@@ -109,6 +107,10 @@ class GetPortfolio(GenericGET):
                     entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == 'auto':
                 entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+                if len(entity_ids) == 0:
+                    message = "no entities found"
+                    return Response({"success": False, "message": message},
+                                    status=status.HTTP_404_NOT_FOUND)
 
             # fetch portfolio
             stories = user_portfolio(entity_ids, dates, mode)
@@ -134,10 +136,8 @@ class GetEntity(GenericGET):
     """
 
     def post(self, request):
-        # user = self.getSingleObjectFromPOST(
-        #     request, "user_uuid", "uuid", DashUser)
-        entity = self.getSingleObjectFromPOST(
-            request, "company_uuid", "uuid", Entity)
+        user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
+        entity = self.getSingleObjectFromPOST(request, "entity", "uuid", Entity)
         dates = extract_timeperiod(request)
         mode = self.getMode(request)
         if mode == 'portfolio':
@@ -171,10 +171,8 @@ class GetBucket(GenericGET):
     """
 
     def post(self, request):
-        user = self.getSingleObjectFromPOST(
-            request, "user_uuid", "uuid", DashUser)
-        bucket = self.getSingleObjectFromPOST(
-            request, "bucket_uuid", "uuid", Bucket)
+        user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
+        bucket = self.getSingleObjectFromPOST(request, "bucket", "uuid", Bucket)
         dates = extract_timeperiod(request)
         mode = self.getMode(request)
 
@@ -205,6 +203,12 @@ class GetBucket(GenericGET):
                 entity_ids = self.getEntitiesFromAuto(
                     request, bucket.scenarioID.uuid)
 
+                # if no entities exists, return
+                if len(entity_ids) == 0:
+                    message = "no entities found"
+                    return Response({"success": False, "message": message},
+                                    status=status.HTTP_404_NOT_FOUND)
+
             stories = user_bucket(bucket.uuid, entity_ids,
                                   bucket.scenarioID.uuid, dates, mode)
 
@@ -221,6 +225,7 @@ class GetBucket(GenericGET):
 
         message = "user or bucket doesn't exist"
         return Response({"success": False, "message": message})
+
 
 class GetBucketEntity(GenericGET):
     """
@@ -246,7 +251,7 @@ class GetBucketEntity(GenericGET):
             if mode == "portfolio" and entity.scenarioID != bucket.scenarioID:
                 message = "this entity is not tracked under this scenario'"
                 return Response({"success": False, "message": message})
-              
+
             stories = user_entity_bucket(
                 bucket.uuid, entity.uuid, bucket.scenarioID.uuid, dates, mode)
 

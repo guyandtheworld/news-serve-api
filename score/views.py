@@ -98,7 +98,6 @@ class GetPortfolioScore(GenericGET):
         else:
             mode = "portfolio"
 
-
         if user and scenario:
             portfolio = []
             if mode == "portfolio" or mode is None:
@@ -241,7 +240,7 @@ class GetNewsCount(GenericGET):
             elif mode == "auto":
                 _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
 
-            counts = portfolio_count(entity_ids, dates,mode)
+            counts = portfolio_count(entity_ids, dates, mode)
 
             return Response({"success": True,
                              "samples": len(counts),
@@ -263,12 +262,12 @@ class GetBucketScore(GenericGET):
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
-        # check if user is subscribed to the scenario
-        if user.defaultScenario != scenario:
-            message = "user is not subscribed to the scenario"
-            return Response({"success": False, "message": message})
 
         if user and scenario:
+            # check if user is subscribed to the scenario
+            if user.defaultScenario != scenario:
+                message = "user is not subscribed to the scenario"
+                return Response({"success": False, "message": message})
 
             # get all buckets except the other model
             buckets = Bucket.objects.filter(~Q(model_label="other"),
@@ -285,8 +284,8 @@ class GetBucketScore(GenericGET):
             # if no scores return 0
             scores = []
             if len(bucket_scores) == 0:
-                obj = {}
                 for bucket in buckets:
+                    obj = {}
                     obj["uuid"] = bucket.uuid
                     obj["name"] = bucket.name
                     obj["score"] = 0
@@ -341,8 +340,8 @@ class GetEntityBucketScore(GenericGET):
             # if no scores return 0
             scores = []
             if len(entity_scores) == 0:
-                obj = {}
                 for bucket in buckets:
+                    obj = {}
                     obj["uuid"] = bucket.uuid
                     obj["name"] = bucket.name
                     obj["score"] = 0
