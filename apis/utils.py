@@ -11,7 +11,7 @@ def extract_timeperiod(request):
     elif 'startdate' in data:
         return (datetime.strptime(request.data['startdate'], date_format), datetime.now())
     else:
-        default_timeperiod = 150
+        default_timeperiod = 60
         enddate = datetime.now()
         startdate = enddate - timedelta(days=default_timeperiod)
         return (startdate, enddate)
