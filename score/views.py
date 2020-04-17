@@ -60,7 +60,10 @@ class GenericGET(views.APIView):
         entity_obj = StoryEntityRef.objects.filter(uuid__in=entity_ids)
         return entity_obj, entity_ids
 
-    def getScores(self, entity_scores, portfolio):
+    def getScores(self, entity_scores, portfolio, metric, func):
+        """
+        Normalize the scores and add type to the entities.
+        """
         # if no scores return 0
         scores = []
         if len(entity_scores) == 0:
@@ -69,13 +72,14 @@ class GenericGET(views.APIView):
                     obj = {}
                     obj["uuid"] = entity.uuid
                     obj["name"] = entity.name
-                    obj["gross_entity_score"] = 0
+                    obj["type"] = entity.typeID.name
+                    obj[metric] = 0
                     scores.append(obj)
                 return scores
             else:
                 return []
 
-        scores = get_gross_entity_score(entity_scores)
+        scores = func(entity_scores)
         return scores
 
 
@@ -124,8 +128,15 @@ class GetPortfolioScore(GenericGET):
                 portfolio, entity_ids = self.getEntitiesFromAuto(
                     request, scenario.uuid)
 
+                if len(entity_ids) == 0:
+                    message = "no entities found"
+                    return Response({"success": False, "message": message},
+                                    status=status.HTTP_404_NOT_FOUND)
+
             entity_scores = portfolio_score(entity_ids, scenario.uuid, dates)
-            scores = self.getScores(entity_scores, portfolio)
+            scores = self.getScores(entity_scores, portfolio,
+                                    metric="gross_entity_score",
+                                    func=get_gross_entity_score)
 
             return Response({"success": True,
                              "samples": len(scores),
@@ -180,6 +191,12 @@ class GetSentiment(GenericGET):
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
                 _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+
+                if len(entity_ids) == 0:
+                    message = "no entities found"
+                    return Response({"success": False, "message": message},
+                                    status=status.HTTP_404_NOT_FOUND)
+
             entity_scores = portfolio_sentiment(entity_ids, dates, mode)
 
             scores = get_gross_sentiment_scores(entity_scores)
@@ -239,6 +256,11 @@ class GetNewsCount(GenericGET):
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
                 _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+
+                if len(entity_ids) == 0:
+                    message = "no entities found"
+                    return Response({"success": False, "message": message},
+                                    status=status.HTTP_404_NOT_FOUND)
 
             counts = portfolio_count(entity_ids, dates, mode)
 

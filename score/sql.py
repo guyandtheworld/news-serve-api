@@ -45,20 +45,16 @@ def portfolio_score(entity_ids, scenario_id, dates):
         return ()
 
     query = """
-            select ae."entityID_id"::text, entty."name", "bucketID_id"::text, "grossScore",
+            select entity_score."entityID_id"::text, entity."name",
+            "bucketID_id"::text, "grossScore", entity_type."name" as "type",
             extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
             extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
-            apis_entityscore ae
-            inner join apis_story sty
-            on ae."storyID_id" = sty.uuid
-            inner join apis_bucket bckt
-            on ae."bucketID_id" = bckt.uuid
-            inner join apis_storyentityref entty
-            on ae."entityID_id" = entty.uuid
-            where ae."entityID_id" in {}
-            and model_label != 'other'
-            and "modelID_id" = {}
-            and published_date > %s and published_date <= %s
+            apis_entityscore entity_score inner join apis_story story on entity_score."storyID_id" = story.uuid
+            inner join apis_bucket bucket on entity_score."bucketID_id" = bucket.uuid
+            inner join apis_storyentityref entity on entity_score."entityID_id" = entity.uuid
+            inner join apis_entitytype entity_type on entity."typeID_id" = entity_type.uuid
+            where entity_score."entityID_id" in {} and model_label != 'other'
+            and "modelID_id" = {} and published_date > %s and published_date <= %s
             """.format(entity_ids, model_id)
 
     with connection.cursor() as cursor:
