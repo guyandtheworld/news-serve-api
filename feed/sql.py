@@ -134,7 +134,7 @@ def user_entity(entity_id, dates, mode):
                 from  apis_storyentitymap entitymap
                 inner join apis_story story on entitymap."storyID_id" = story.uuid
                 {}
-                on stry.uuid = stby."storyID_id" and "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" = {}
                 and published_date > %s and published_date <= %s
                 """.format(EXTRA_INFO_AUTO, id_str)
