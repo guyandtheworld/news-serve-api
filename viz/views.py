@@ -69,23 +69,19 @@ class NewsCountViz(GenericGET):
                                            uuid=entity_uuid)
 
             data = news_count_query("entity", entity.uuid, dates, mode=mode)
-            records = self.getStories(entity_uuid, data, mode, metric_label="count")
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
             data = news_count_query("bucket", bucket.uuid, dates,
                                     bucket.scenarioID.uuid)
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
         else:
             msg = "no viz for this type"
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"success": True, "length": len(records),
-                         "data": records},
+        return Response({"success": True, "length": len(data),
+                         "data": data},
                         status=status.HTTP_200_OK)
 
 
@@ -103,6 +99,7 @@ class BucketScoreViz(GenericGET):
             mode = request.data["mode"]
         else:
             mode = "portfolio"
+
         # viz for entity and bucket
         if request.data["type"] == 'entity':
             entity_uuid = request.data["entity_uuid"]
@@ -119,25 +116,19 @@ class BucketScoreViz(GenericGET):
                                       dates,
                                       entity.uuid,
                                       scenario_id=bucket.scenarioID.uuid)
-
-            records = self.getStories(entity_uuid, data, mode, metric_label="score")
-
         # viz for just buckets
-        if request.data["type"] == 'bucket':
+        elif request.data["type"] == 'bucket':
             data = bucket_score_query("bucket",
                                       bucket.uuid,
                                       dates,
                                       scenario_id=bucket.scenarioID.uuid)
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
         else:
             msg = "no viz for this type"
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"success": True, "length": len(records),
-                         "data": records},
+        return Response({"success": True, "length": len(data),
+                         "data": data},
                         status=status.HTTP_200_OK)
 
 
@@ -175,17 +166,12 @@ class SentimentViz(GenericGET):
                                    scenario_id=scenario.uuid,
                                    mode=mode)
 
-            records = self.getStories(
-                entity_uuid, data, mode, metric_label="sentiment")
         # viz for bucket
         elif request.data["type"] == 'bucket':
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
             data = sentiment_query(
                 "bucket", bucket.uuid, request.data["sentiment_type"], dates, bucket.scenarioID.uuid)
-            return Response({"success": True, "length": len(data),
-                             "data": data},
-                            status=status.HTTP_200_OK)
 
         else:
             msg = "no viz for this type"
@@ -194,9 +180,9 @@ class SentimentViz(GenericGET):
 
         # if sentiment is negative, return negative time series
         if request.data["sentiment_type"] == "neg":
-            for i in range(len(records)):
-                records[i]["sentiment"] = -records[i]["sentiment"]
+            for i in range(len(data)):
+                data[i][list(data[i].keys())[0]] = -data[i][list(data[i].keys())[0]]
 
-        return Response({"success": True, "length": len(records),
-                         "data": records},
+        return Response({"success": True, "length": len(data),
+                         "data": data},
                         status=status.HTTP_200_OK)

@@ -4,8 +4,7 @@ from django.db import connection
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     return [
-        row for row in cursor.fetchall()
-    ]
+        {str(row[0]): row[1]} for row in cursor.fetchall()]
 
 
 def get_latest_model_uuid(scenario):
@@ -87,7 +86,7 @@ def sentiment_query(viz_type, uuid, sentiment_type, dates, scenario_id=None, mod
                     inner join apis_storysentiment sent
                     on as2.uuid=sent."storyID_id"
                     where "entityID_id" = '{}') sem
-                    and published_date > %s and published_date <= %s
+                    where published_date > %s and published_date <= %s
                     group by 1 order by 1
                     """.format(sentiment_type, uuid)
         else:
@@ -102,7 +101,7 @@ def sentiment_query(viz_type, uuid, sentiment_type, dates, scenario_id=None, mod
                     inner join apis_storysentiment sent
                     on sty.uuid=sent."storyID_id"
                     where as3."entityID_id" = '{}') sem
-                    and published_date > %s and published_date <= %s
+                    where published_date > %s and published_date <= %s
                     group by 1 order by 1
                     """.format(sentiment_type, uuid)
     elif viz_type == "bucket":
@@ -118,7 +117,7 @@ def sentiment_query(viz_type, uuid, sentiment_type, dates, scenario_id=None, mod
                 where ae."bucketID_id"='{}'
                 and ae."modelID_id" = '{}'
                 and ae."grossScore" > .2) snt
-                and published_date > %s and published_date <= %s
+                where published_date > %s and published_date <= %s
                 group by 1 order by 1
                 """.format(sentiment_type, uuid, model_id)
 
