@@ -18,7 +18,8 @@ def get_latest_model_uuid(scenario):
     query = """
     select uuid from apis_modeldetail am where
     "version"=(select max("version") from apis_modeldetail where "scenarioID_id"='{}')
-    """.format(scenario)
+    and "scenarioID_id"='{}'
+    """.format(scenario, scenario)
 
     with connection.cursor() as cursor:
         cursor.execute(query)
