@@ -15,7 +15,8 @@ def get_latest_model_uuid(scenario):
     query = """
     select uuid from apis_modeldetail am where
     "version"=(select max("version") from apis_modeldetail where "scenarioID_id"='{}')
-    """.format(scenario)
+    and "scenarioID_id"='{}'
+    """.format(scenario, scenario)
 
     with connection.cursor() as cursor:
         cursor.execute(query)
@@ -152,6 +153,7 @@ def bucket_score_query(viz_type, bucket_id, dates, entity_id=None, scenario_id=N
         query = """
                 select "storyDate"::date, sum("grossScore")/count(*) as bucket_score
                 from apis_bucketscore ab
+                inner join apis_story sty on ab."storyID_id" = sty.uuid
                 where ab."modelID_id" = '{}'
                 and ab."bucketID_id"='{}'
                 and published_date > %s and published_date <= %s
