@@ -71,6 +71,8 @@ class StoryEntityRef(models.Model):
     name = models.CharField(max_length=200)
     typeID = models.ForeignKey("EntityType", on_delete=models.CASCADE)
     wikipedia = models.CharField(max_length=100, blank=True)
+    alias = models.UUIDField(null=True, blank=True)
+    render = models.BooleanField(default=True)
 
     def __str__(self):
         return "{} - {}".format(self.name, self.typeID.name)

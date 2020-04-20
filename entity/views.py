@@ -7,12 +7,13 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from apis.models.users import DashUser, Portfolio
-from apis.models.entity import Entity
+from apis.models.entity import Entity, StoryEntityRef
 from apis.models.scenario import Scenario
 from .utils import get_anchors, get_alias
 from .serializers import (EntitySerializer,
                           EntityListSerializer,
-                          AliasSerializer)
+                          AliasSerializer,
+                          StoryEntityRefSerializer)
 
 
 class EntityInfo(views.APIView):
@@ -257,3 +258,39 @@ class AddAlias(views.APIView):
         msg = "no given user or scenario or entity exists"
         return Response({"success": False, "data": msg},
                         status=status.HTTP_404_NOT_FOUND)
+
+
+class EntityRef(views.APIView):
+    """
+    CRUD on EntityRef of the Stories
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        uuids = request.data
+        for uuid in uuids:
+            entity_ref = StoryEntityRef.objects.get(uuid=uuid)
+            entity_ref.render = False
+            entity_ref.save()
+        return Response(
+            {"success": True},
+            status=status.HTTP_200_OK
+        )
+
+
+class EntitySearch(views.APIView):
+    """
+    Search database for a particular API
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        keyword = request.data["keyword"]
+        entities = StoryEntityRef.objects.filter(name__icontains=keyword)
+        serializer = StoryEntityRefSerializer(entities, many=True)
+        return Response(
+            {"success": True, "result": serializer.data},
+            status=status.HTTP_200_OK
+        )

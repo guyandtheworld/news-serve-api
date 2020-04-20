@@ -55,6 +55,7 @@ def portfolio_score(entity_ids, scenario_id, dates):
             inner join apis_storyentityref entity on entity_score."entityID_id" = entity.uuid
             inner join apis_entitytype entity_type on entity."typeID_id" = entity_type.uuid
             where entity_score."entityID_id" in {} and model_label != 'other'
+            and entity.render = True
             and "modelID_id" = {} and published_date > %s and published_date <= %s
             """.format(entity_ids, model_id)
 
@@ -154,7 +155,7 @@ def portfolio_count(entity_ids, dates, mode):
                 """.format(entity_ids)
     else:
         query = """
-                select entty.uuid, entty.name, news_count from
+                select entity.uuid, entity.name, news_count from
                 (select "entityID_id", count(*) as news_count
                 from apis_storyentitymap as2
                 inner join
@@ -162,8 +163,8 @@ def portfolio_count(entity_ids, dates, mode):
                 published_date > %s and published_date <= %s) story
                 on as2."storyID_id" = story.uuid
                 group by "entityID_id") grby
-                inner join apis_storyentityref entty on grby."entityID_id" = entty.uuid
-                where entty.uuid in {}
+                inner join apis_storyentityref entity on grby."entityID_id" = entity.uuid
+                where entity.uuid in {} and entity.render = True
                 """.format(entity_ids)
 
     with connection.cursor() as cursor:
@@ -206,7 +207,7 @@ def portfolio_sentiment(entity_ids, dates, mode):
                 on as2."entityID_id" = as3.uuid
                 inner join apis_storysentiment stysent
                 on stysent."storyID_id" = sty.uuid
-                where as2."entityID_id" in {}
+                where as2."entityID_id" in {} and as3.render = True
                 and published_date > %s and published_date <= %s
                 """.format(entity_ids)
 

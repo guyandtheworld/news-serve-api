@@ -9,5 +9,7 @@ urlpatterns = [
     path("listscenarioentities", views.ListScenarioEntities.as_view()),
     path("addentity", views.AddEntity.as_view()),
     path("addalias", views.AddAlias.as_view()),
-    path("addtoportfolio", views.AddToPortfolio.as_view())
+    path("addtoportfolio", views.AddToPortfolio.as_view()),
+    path("entityref", views.EntityRef.as_view()),
+    path("search", views.EntitySearch.as_view())
 ]

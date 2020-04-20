@@ -1,6 +1,7 @@
+from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-from apis.models.entity import Entity, Alias
+from apis.models.entity import Entity, Alias, StoryEntityRef, EntityType
 from apis.models.users import Portfolio
 
 
@@ -44,3 +45,14 @@ class PortfolioSerializer(ModelSerializer):
     class Meta:
         model = Portfolio
         exclude = ["uuid"]
+
+
+class StoryEntityRefSerializer(ModelSerializer):
+    type_id = serializers.UUIDField(source='typeID.uuid', read_only=True)
+    entity_type = serializers.CharField(source='typeID.name', read_only=True)
+
+    class Meta:
+        model = StoryEntityRef
+        fields = [field.name for field in model._meta.fields]
+        fields.append('entity_type')
+        fields.append('type_id')
