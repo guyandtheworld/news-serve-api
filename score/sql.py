@@ -145,7 +145,7 @@ def portfolio_count(entity_ids, dates, mode):
 
     if mode == "portfolio":
         query = """
-                select entty.name, entty.uuid, news_count from
+                select entty.uuid, entty.name, news_count from
                 (select "entityID_id", count(*) as news_count from
                 apis_story as2 where published_date > %s and published_date <= %s
                 group by "entityID_id") grby
@@ -154,7 +154,7 @@ def portfolio_count(entity_ids, dates, mode):
                 """.format(entity_ids)
     else:
         query = """
-                select entty.name, entty.uuid, news_count from
+                select entty.uuid, entty.name, news_count from
                 (select "entityID_id", count(*) as news_count
                 from apis_storyentitymap as2
                 inner join

@@ -22,6 +22,7 @@ from apis.utils import extract_timeperiod
 
 
 class GenericGET(views.APIView):
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -60,26 +61,45 @@ class GenericGET(views.APIView):
         entity_obj = StoryEntityRef.objects.filter(uuid__in=entity_ids)
         return entity_obj, entity_ids
 
-    def getScores(self, entity_scores, portfolio, metric, func):
+    def getPortfolio(self, user_uuid, scenario_uuid):
+        """
+        Fetch a portfolio of a particular user
+        """
+        query = """
+                    select * from public.apis_entity as2 where uuid in
+                    (
+                    select "entityID_id" from public.apis_portfolio
+                    where "userID_id" = '{}'
+                    and "scenarioID_id" = '{}'
+                    )
+                """
+
+        portfolio = Entity.objects.raw(
+            query.format(user_uuid, scenario_uuid))
+
+        portfolio = [c for c in portfolio]
+        return portfolio
+
+    def getScores(self, entity_scores, portfolio, entity_ids, metric, func):
         """
         Normalize the scores and add type to the entities.
         """
-        # if no scores return 0
-        scores = []
-        if len(entity_scores) == 0:
-            if len(portfolio) > 0:
-                for entity in portfolio:
-                    obj = {}
-                    obj["uuid"] = entity.uuid
-                    obj["name"] = entity.name
-                    obj["type"] = entity.typeID.name
-                    obj[metric] = 0
-                    scores.append(obj)
-                return scores
-            else:
-                return []
 
         scores = func(entity_scores)
+
+        # check entities without scores
+        entity_obj = {str(x.uuid): x for x in portfolio}
+        not_scored = list(set(entity_ids)
+                          - set([str(score["uuid"]) for score in scores]))
+        for uuid in not_scored:
+            entity = entity_obj[uuid]
+            obj = {}
+            obj["uuid"] = entity.uuid
+            obj["name"] = entity.name
+            obj["type"] = entity.typeID.name
+            obj[metric] = 0.0
+            scores.append(obj)
+
         return scores
 
 
@@ -104,20 +124,10 @@ class GetPortfolioScore(GenericGET):
 
         if user and scenario:
             portfolio = []
-            if mode == "portfolio" or mode is None:
-                query = """
-                            select * from public.apis_entity as2 where uuid in
-                            (
-                            select "entityID_id" from public.apis_portfolio
-                            where "userID_id" = '{}'
-                            and "scenarioID_id" = '{}'
-                            )
-                        """
-                portfolio = Entity.objects.raw(
-                    query.format(user.uuid, scenario.uuid))
+            if mode == "portfolio":
 
-                portfolio = [c for c in portfolio]
-
+                # fetch the portfolio of a particular user
+                portfolio = self.getPortfolio(user.uuid, scenario.uuid)
                 if len(portfolio) == 0:
                     message = "no companies in portfolio"
                     return Response({"success": True, "data": message},
@@ -134,7 +144,7 @@ class GetPortfolioScore(GenericGET):
                                     status=status.HTTP_404_NOT_FOUND)
 
             entity_scores = portfolio_score(entity_ids, scenario.uuid, dates)
-            scores = self.getScores(entity_scores, portfolio,
+            scores = self.getScores(entity_scores, portfolio, entity_ids,
                                     metric="gross_entity_score",
                                     func=get_gross_entity_score)
 
@@ -169,19 +179,9 @@ class GetSentiment(GenericGET):
             mode = "portfolio"
 
         if user and scenario:
-            if mode == "portfolio" or mode is None:
-                query = """
-                            select * from public.apis_entity as2 where uuid in
-                            (
-                            select "entityID_id" from public.apis_portfolio
-                            where "userID_id" = '{}'
-                            and "scenarioID_id" = '{}'
-                            )
-                        """
-                portfolio = Entity.objects.raw(
-                    query.format(user.uuid, scenario.uuid))
+            if mode == "portfolio":
 
-                portfolio = [c for c in portfolio]
+                portfolio = self.getPortfolio(user.uuid, scenario.uuid)
 
                 if len(portfolio) == 0:
                     message = "no companies in portfolio"
@@ -190,7 +190,9 @@ class GetSentiment(GenericGET):
 
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
-                _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+
+                portfolio, entity_ids = self.getEntitiesFromAuto(
+                    request, scenario.uuid)
 
                 if len(entity_ids) == 0:
                     message = "no entities found"
@@ -199,7 +201,9 @@ class GetSentiment(GenericGET):
 
             entity_scores = portfolio_sentiment(entity_ids, dates, mode)
 
-            scores = get_gross_sentiment_scores(entity_scores)
+            scores = self.getScores(entity_scores, portfolio, entity_ids,
+                                    metric="sentiment",
+                                    func=get_gross_sentiment_scores)
 
             return Response({"success": True,
                              "samples": len(scores),
@@ -233,20 +237,9 @@ class GetNewsCount(GenericGET):
 
         if user and scenario:
 
-            if mode == "portfolio" or mode is None:
+            if mode == "portfolio":
 
-                query = """
-                            select * from public.apis_entity as2 where uuid in
-                            (
-                            select "entityID_id" from public.apis_portfolio
-                            where "userID_id" = '{}'
-                            and "scenarioID_id" = '{}'
-                            )
-                        """
-                portfolio = Entity.objects.raw(
-                    query.format(user.uuid, scenario.uuid))
-
-                portfolio = [c for c in portfolio]
+                portfolio = self.getPortfolio(user.uuid, scenario.uuid)
 
                 if len(portfolio) == 0:
                     message = "no companies in portfolio"
@@ -255,18 +248,23 @@ class GetNewsCount(GenericGET):
 
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
-                _, entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+                portfolio, entity_ids = self.getEntitiesFromAuto(
+                    request, scenario.uuid)
 
                 if len(entity_ids) == 0:
                     message = "no entities found"
                     return Response({"success": False, "message": message},
                                     status=status.HTTP_404_NOT_FOUND)
 
-            counts = portfolio_count(entity_ids, dates, mode)
+            entity_scores = portfolio_count(entity_ids, dates, mode)
+
+            scores = self.getScores(entity_scores, portfolio, entity_ids,
+                                    metric="news_count",
+                                    func=lambda x: x)
 
             return Response({"success": True,
-                             "samples": len(counts),
-                             "data": counts},
+                             "samples": len(scores),
+                             "data": scores},
                             status=status.HTTP_200_OK)
 
         message = "user or scenario doesn't exist"

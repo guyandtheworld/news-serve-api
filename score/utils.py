@@ -23,6 +23,9 @@ def get_gross_entity_score(entity_scores):
     * Aggregating scores for each bucket g1*t1
     * Average of all Buckets
     """
+    if len(entity_scores) == 0:
+        return []
+
     df = pd.DataFrame(entity_scores)
     df["score"] = df.apply(lambda x: hotness(x['grossScore'], x['timeDiff']), axis=1)
     scores = []
@@ -99,4 +102,6 @@ def get_gross_sentiment_scores(sentiment_scores):
     sentiment_scores["score"] *= 100
     sentiment_scores["score"] = sentiment_scores["score"].apply(
         lambda x: round(x, 2))
+
+    sentiment_scores.columns = ['uuid', 'name', 'sentiment']
     return sentiment_scores.to_dict('records')
