@@ -48,11 +48,9 @@ class PortfolioSerializer(ModelSerializer):
 
 
 class StoryEntityRefSerializer(ModelSerializer):
-    type_id = serializers.UUIDField(source='typeID.uuid', read_only=True)
     entity_type = serializers.CharField(source='typeID.name', read_only=True)
 
     class Meta:
         model = StoryEntityRef
         fields = [field.name for field in model._meta.fields]
         fields.append('entity_type')
-        fields.append('type_id')

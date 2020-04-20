@@ -288,6 +288,10 @@ class EntitySearch(views.APIView):
 
     def post(self, request):
         keyword = request.data["keyword"]
+        if len(keyword) < 3:
+            msg = "Please provide a better description"
+            return Response({"success": False, "data": msg},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
         entities = StoryEntityRef.objects.filter(name__icontains=keyword)
         serializer = StoryEntityRefSerializer(entities, many=True)
         return Response(
