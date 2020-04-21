@@ -267,6 +267,25 @@ class EntityRef(views.APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        entities = StoryEntityRef.objects.filter(render=False)
+        serializer = StoryEntityRefSerializer(entities, many=True)
+        return Response(
+            {"success": True, "result": serializer.data[:100]},
+            status=status.HTTP_200_OK
+        )
+
+    def put(self, request):
+        uuids = request.data
+        for uuid in uuids:
+            entity_ref = get_object_or_404(StoryEntityRef, uuid=uuid)
+            entity_ref.render = True
+            entity_ref.save()
+        return Response(
+            {"success": True},
+            status=status.HTTP_200_OK
+        )
+
     def delete(self, request):
         uuids = request.data
         for uuid in uuids:
