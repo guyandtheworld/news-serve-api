@@ -22,10 +22,7 @@ def get_scenario_entity_count(scenario_id, type_id, n_entities):
         limit = ""
     if type_id:
         type_filter = """
-        inner join
-        (select uuid as type_id from apis_storyentityref as sef
-        where sef."typeID_id" = '{}') as type
-        on entmap."entityID_id" = type.type_id
+        and sef."typeID_id" = '{}'
         """.format(type_id)
     else:
         type_filter = ""
@@ -33,7 +30,10 @@ def get_scenario_entity_count(scenario_id, type_id, n_entities):
     query = """
     select "entityID_id",count(story_id) as count from apis_storyentitymap
     as entmap
-    {}
+    inner join
+    (select uuid as type_id from apis_storyentityref as sef
+    where render=True {}) as type
+    on entmap."entityID_id" = type.type_id
     inner join
     (select uuid as story_id from apis_story as story
     where story."scenarioID_id" = '{}') as stry
