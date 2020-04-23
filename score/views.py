@@ -97,6 +97,7 @@ class GenericGET(views.APIView):
             obj["uuid"] = entity.uuid
             obj["name"] = entity.name
             obj["type"] = entity.typeID.name
+            obj["wikipedia"] = entity.wikipedia
             obj[metric] = 0.0
             scores.append(obj)
 

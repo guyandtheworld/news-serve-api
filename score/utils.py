@@ -32,7 +32,7 @@ def get_gross_entity_score(entity_scores):
     df.drop(['grossScore', 'timeDiff'], axis=1, inplace=True)
     for entity in df["entityID_id"].unique():
         entity_df = df[df["entityID_id"] == entity]
-        bucket_scores = entity_df.groupby(['bucketID_id', "name", "type"])[
+        bucket_scores = entity_df.groupby(['bucketID_id', "name", "type", "wikipedia"])[
             "score"].agg(['sum', 'count'])
         bucket_scores = bucket_scores.reset_index()
 
@@ -42,11 +42,11 @@ def get_gross_entity_score(entity_scores):
 
         # sum all buckets and normalize with bucket count
         gross_entity_score = bucket_scores['score'].sum() / len(bucket_scores)
-
         obj = {}
         obj["uuid"] = entity
         obj["name"] = bucket_scores["name"].values[0]
         obj["type"] = bucket_scores["type"].values[0]
+        obj["wikipedia"] = bucket_scores["wikipedia"].values[0]
         obj["gross_entity_score"] = round(gross_entity_score * 100, 2)
         scores.append(obj)
 

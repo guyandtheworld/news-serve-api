@@ -46,7 +46,7 @@ def portfolio_score(entity_ids, scenario_id, dates):
         return ()
 
     query = """
-            select entity_score."entityID_id"::text, entity."name",
+            select entity_score."entityID_id"::text, entity."name", entity.wikipedia,
             "bucketID_id"::text, "grossScore", entity_type."name" as "type",
             extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
             extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
