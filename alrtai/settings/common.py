@@ -124,3 +124,12 @@ CORS_ORIGIN_WHITELIST = [
     "http://dash.alrt.ai",
     "https://dash.alrt.ai",
 ]
+
+
+# settings for smtp server
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp-relay.gmail.com'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = 587
