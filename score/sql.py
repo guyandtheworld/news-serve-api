@@ -155,7 +155,8 @@ def portfolio_count(entity_ids, dates, mode):
                 """.format(entity_ids)
     else:
         query = """
-                select entity.uuid, entity.name, news_count from
+                select entity.uuid, entity.name, entity_type."name" as "type",
+                entity.wikipedia, news_count from
                 (select "entityID_id", count(*) as news_count
                 from apis_storyentitymap as2
                 inner join
@@ -164,6 +165,7 @@ def portfolio_count(entity_ids, dates, mode):
                 on as2."storyID_id" = story.uuid
                 group by "entityID_id") grby
                 inner join apis_storyentityref entity on grby."entityID_id" = entity.uuid
+                inner join apis_entitytype entity_type on entity."typeID_id" = entity_type.uuid
                 where entity.uuid in {} and entity.render = True
                 """.format(entity_ids)
 
