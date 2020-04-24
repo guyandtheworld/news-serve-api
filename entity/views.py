@@ -276,14 +276,17 @@ class EntityRef(views.APIView):
         )
 
     def put(self, request):
-        entity = get_object_or_404(StoryEntityRef, uuid=request.data["uuid"])
-        serializer = StoryEntityRefSerializer(entity, data=request.data,
-                                              partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": True, "data": serializer.data},
-                            status=status.HTTP_200_OK
-                            )
+        ent_data = request.data
+        for ent in ent_data:
+            entity = get_object_or_404(StoryEntityRef, uuid=ent["uuid"])
+            serializer = StoryEntityRefSerializer(entity, data=ent,
+                                                  partial=True)
+            if serializer.is_valid():
+                serializer.save()
+
+        return Response({"success": True, "data": serializer.data},
+                        status=status.HTTP_200_OK
+                        )
 
     def delete(self, request):
         uuids = request.data
