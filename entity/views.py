@@ -284,7 +284,7 @@ class EntityRef(views.APIView):
             if serializer.is_valid():
                 serializer.save()
 
-        return Response({"success": True, "data": serializer.data},
+        return Response({"success": True},
                         status=status.HTTP_200_OK
                         )
 

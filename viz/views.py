@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
-from django.shortcuts import get_object_or_404
 
+from django.shortcuts import get_object_or_404
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -45,6 +46,27 @@ class GenericGET(views.APIView):
         df.fillna("", inplace=True)
         return df.to_dict('records')
 
+    def rolling_mean(self, agg, prop='W'):
+        """given data returns the rolling weekly mean of news count"""
+
+        date = []
+        count = []
+        for i in agg:
+            date.append(list(i.keys())[0])
+            count.append(list(i.values())[0])
+
+        df = pd.DataFrame({'date': date, 'value': count})
+        df['date'] = pd.to_datetime(df['date'].values)
+        df = df.groupby('date')['value'].agg(sum)
+
+        df = df.resample(prop).agg(np.mean).fillna(0)
+
+        data = []
+        for i, v in zip(df.index.values, df.values):
+            data.append({str(i)[:10]: v})
+
+        return data
+
 
 class NewsCountViz(GenericGET):
     """
@@ -82,6 +104,9 @@ class NewsCountViz(GenericGET):
             msg = "no viz for this type"
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
+
+        if "rolling" in request.data.keys() and request.data["rolling"]:
+            data = self.rolling_mean(data)
 
         return Response({"success": True, "length": len(data),
                          "data": data},
@@ -129,6 +154,9 @@ class BucketScoreViz(GenericGET):
             msg = "no viz for this type"
             return Response({"success": False, "data": msg},
                             status=status.HTTP_404_NOT_FOUND)
+
+        if "rolling" in request.data.keys() and request.data["rolling"]:
+            data = self.rolling_mean(data)
 
         return Response({"success": True, "length": len(data),
                          "data": data},
@@ -185,6 +213,9 @@ class SentimentViz(GenericGET):
         if request.data["sentiment_type"] == "neg":
             for i in range(len(data)):
                 data[i][list(data[i].keys())[0]] = -data[i][list(data[i].keys())[0]]
+
+        if "rolling" in request.data.keys() and request.data["rolling"]:
+            data = self.rolling_mean(data)
 
         return Response({"success": True, "length": len(data),
                          "data": data},
