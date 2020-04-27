@@ -192,3 +192,16 @@ def get_entity_stories(dates, entity_id, mode):
         cursor.execute(query)
         rows = dictfetchall(cursor)
     return rows
+    
+def get_count_per_country(dates):
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
+
+    query = """select source_country,count(title) from apis_story
+    where published_date > %s and published_date <= %s
+    group by source_country
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(query, [start_date, end_date])
+        rows = cursor.fetchall()
+    return rows
