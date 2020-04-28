@@ -42,7 +42,7 @@ def news_count_query(viz_type, uuid, dates, scenario_id=None, mode=None):
                     """.format(uuid)
         else:
             query = """
-                    select published_date::date, count(*) from apis_storyentitymap as3
+                    select published_date::date, count(distinct url) from apis_storyentitymap as3
                     left join apis_story sty
                     on sty.uuid = as3."storyID_id"
                     where as3."entityID_id" = '{}'
