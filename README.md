@@ -16,6 +16,9 @@ This repository contains all of the APIs which we serve to the end-user using ou
 2. Setup the Database Keys locally. 
     - Create a folder called `.keys` in the apis folder
     - Create a file called django.env in the `.keys` folder
+    - Run `docker-compose -f docker-compose-prod.yml up --build` for local development
+    - Get into the app container by running `docker exec -it <ID> bash`
+    - Run migrations using `python manage.py migrate`
     - Put the db credential in the file (ask Adarsh)
     - Run `docker-compose -f docker-compose-prod.yml up --build` for production
     - Go to `http://localhost:8000/`

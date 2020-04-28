@@ -1,7 +1,6 @@
 import json
 
 from datetime import datetime, timedelta
-from django.conf import settings
 from django.core import serializers
 from django.core.mail import send_mail
 from django.contrib.auth.models import User
@@ -22,7 +21,7 @@ from .models.scenario import (
     Scenario
 )
 
-from alrtai.settings.common import EMAIL_HOST_USER
+from settings.common import EMAIL_HOST_USER
 
 from .models.users import DashUser, Client
 from .serializers import (UserSerializer, DashUserSerializer,
@@ -126,12 +125,12 @@ class SignUp(CreateAPIView):
                 defaultScenario=scenario
             )
 
-            #send confirmation email to the new user
+            # send confirmation email to the new user
             subject = 'Thank you for signing up with Alrt.ai'
             message = 'Welcome to Alrt.ai. Your account has been set up'
             from_email = EMAIL_HOST_USER
             to_list = [email]
-            send_mail(subject, message, from_email, to_list, fail_silently = True)
+            send_mail(subject, message, from_email, to_list, fail_silently=True)
 
             # create and return a token for the user
             token = Token.objects.create(user=dash_user_obj.user)

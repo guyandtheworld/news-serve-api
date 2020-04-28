@@ -18,9 +18,12 @@ urlpatterns = [
     path("logout", views.Logout.as_view()),
     path("signup", views.SignUp.as_view()),
 
-# To add custom forgot password page add template_name = "path to html" as argument to as_view()
+    # To add custom forgot password page add template_name = "path to html" as argument to as_view()
     path("reset_password", auth_views.PasswordResetView.as_view(), name="password_reset"),
-    path("reset_password_sent", auth_views.PasswordResetDoneView.as_view(), name="password_reset_done"),
-    path("reset/<uidb64>/<token>", auth_views.PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
-    path("reset_password_complete", auth_views.PasswordResetCompleteView.as_view(), name="password_reset_complete"),
+    path("reset_password_sent", auth_views.PasswordResetDoneView.as_view(),
+         name="password_reset_done"),
+    path("reset/<uidb64>/<token>", auth_views.PasswordResetConfirmView.as_view(),
+         name="password_reset_confirm"),
+    path("reset_password_complete", auth_views.PasswordResetCompleteView.as_view(),
+         name="password_reset_complete"),
 ]
