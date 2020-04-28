@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     "entity",
     "viz",
     "auto",
-    "adminDash"
+    "admindash"
 ]
 
 MIDDLEWARE = [
