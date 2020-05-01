@@ -98,7 +98,7 @@ def user_portfolio(entity_ids, dates, mode):
                 and story_body.body is not null
                 and published_date > %s and published_date <= %s
                 """.format(EXTRA_INFO_AUTO, ids_str)
-    print(query)
+
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)

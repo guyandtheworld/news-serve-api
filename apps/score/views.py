@@ -114,10 +114,7 @@ class GetPortfolioScore(GenericGET):
         scenario = self.getSingleObjectFromPOST(
             request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
-        # check if user is subscribed to the scenario
-        if user.defaultScenario != scenario:
-            message = "user is not subscribed to the scenario"
-            return Response({"success": False, "message": message})
+
         if "mode" in request.data:
             mode = request.data["mode"]
         else:
@@ -125,6 +122,13 @@ class GetPortfolioScore(GenericGET):
 
         if user and scenario:
             portfolio = []
+            entity_ids = []
+
+            # check if user is subscribed to the scenario
+            if user.defaultScenario != scenario:
+                message = "user is not subscribed to the scenario"
+                return Response({"success": False, "message": message})
+
             if mode == "portfolio":
 
                 # fetch the portfolio of a particular user
@@ -170,9 +174,6 @@ class GetSentiment(GenericGET):
             request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
-        if user.defaultScenario != scenario:
-            message = "user is not subscribed to the scenario"
-            return Response({"success": False, "message": message})
 
         if "mode" in request.data:
             mode = request.data["mode"]
@@ -180,6 +181,13 @@ class GetSentiment(GenericGET):
             mode = "portfolio"
 
         if user and scenario:
+            portfolio = []
+            entity_ids = []
+
+            if user.defaultScenario != scenario:
+                message = "user is not subscribed to the scenario"
+                return Response({"success": False, "message": message})
+
             if mode == "portfolio":
 
                 portfolio = self.getPortfolio(user.uuid, scenario.uuid)
@@ -227,9 +235,6 @@ class GetNewsCount(GenericGET):
             request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
         # check if user is subscribed to the scenario
-        if user.defaultScenario != scenario:
-            message = "user is not subscribed to the scenario"
-            return Response({"success": False, "message": message})
 
         if "mode" in request.data:
             mode = request.data["mode"]
@@ -237,6 +242,12 @@ class GetNewsCount(GenericGET):
             mode = "portfolio"
 
         if user and scenario:
+            portfolio = []
+            entity_ids = []
+
+            if user.defaultScenario != scenario:
+                message = "user is not subscribed to the scenario"
+                return Response({"success": False, "message": message})
 
             if mode == "portfolio":
 
@@ -340,12 +351,13 @@ class GetEntityBucketScore(GenericGET):
         entity = self.getSingleObjectFromPOST(
             request, "entity", "uuid", StoryEntityRef)
         dates = extract_timeperiod(request)
-        # check if user is subscribed to the scenario
-        if user.defaultScenario != scenario:
-            message = "user is not subscribed to the scenario"
-            return Response({"success": False, "message": message})
 
         if user and scenario and entity:
+
+            # check if user is subscribed to the scenario
+            if user.defaultScenario != scenario:
+                message = "user is not subscribed to the scenario"
+                return Response({"success": False, "message": message})
 
             # get all buckets except the other model
             buckets = Bucket.objects.filter(~Q(model_label="other"),

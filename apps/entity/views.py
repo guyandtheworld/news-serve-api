@@ -178,6 +178,10 @@ class AddToPortfolio(views.APIView):
         )
 
     def delete(self, request):
+        if "portfolio_ids" not in request.data:
+            return Response({"success": False},
+                            status=status.HTTP_404_NOT_FOUND)
+
         portfolio_ids = request.data["portfolio_ids"]
         for portfolio_id in portfolio_ids:
             portfolio = Portfolio.objects.get(uuid=portfolio_id)
