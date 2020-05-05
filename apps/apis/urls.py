@@ -4,6 +4,9 @@ from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
+    path("addbuckets", views.AddBuckets.as_view()),
+    path("addkeywords", views.AddKeywords.as_view()),
+    path("addscenario", views.CreateScenario.as_view()),
     path("apiauth", views.ObtainCustomAuthToken.as_view()),
     path("getuuid", views.GetUserUUID.as_view()),
     path("getclientuuid", views.GetClientUUID.as_view()),

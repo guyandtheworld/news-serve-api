@@ -7,9 +7,10 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAdminUser
 
 from apis.models.entity import Entity, Alias
+from apis.models.scenario import Scenario
 
 from .serializers import (VerifiableEntitySerializer, EntityUpdateSerializer,
-                          AliasUpdateSerializer)
+                          AliasUpdateSerializer, UnverifiedScenarioSerializer)
 
 
 class ListVerifiableEntities(views.APIView):
@@ -17,10 +18,11 @@ class ListVerifiableEntities(views.APIView):
     List all entities and aliases that are not verfied by the user
 
     """
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser]
 
-    def post(self, request):
+    def get(self, request):
 
         entities = Entity.objects.filter(entryVerified=False)
 
@@ -157,3 +159,25 @@ class VerifyEntity(views.APIView):
                              "entryVerified": serializer.data["entryVerified"]},
                             status=status.HTTP_200_OK
                             )
+
+
+class UnverifiedScenarios(views.APIView):
+    """
+    List all scenarios created by the user and not verfied
+
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+
+        scenarios = Scenario.objects.filter(status="unverified")
+
+        if len(scenarios) > 0:
+            # fetch scenarios that are not verified
+            serializer = UnverifiedScenarioSerializer(scenarios, many=True)
+            return Response({"success": True, "length": len(scenarios),
+                             "data": serializer.data}, status=status.HTTP_200_OK)
+        msg = "all scenarios are verified"
+        return Response({"success": False, "data": msg}, status=status.HTTP_404_NOT_FOUND)

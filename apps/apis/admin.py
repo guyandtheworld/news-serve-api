@@ -6,6 +6,7 @@ from .models.scenario import (
     ModelDetail,
     BucketModel,
     Source,
+    Keywords
 )
 
 from .models.users import (
@@ -56,3 +57,4 @@ admin.site.register(StorySentiment)
 admin.site.register(StoryEntityRef)
 admin.site.register(StoryEntityMap)
 admin.site.register(EntityType)
+admin.site.register(Keywords)

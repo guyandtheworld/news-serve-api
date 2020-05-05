@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from .users import STATUSES
 
 
@@ -14,6 +15,7 @@ class Scenario(models.Model):
     mode = models.CharField(max_length=10, choices=MODES)
     trackingDays = models.SmallIntegerField()
     entityType = models.ForeignKey("EntityType", on_delete=models.PROTECT)
+    description = models.CharField(max_length=250, blank=True)
 
     def __str__(self):
         return self.name
@@ -25,6 +27,7 @@ class Bucket(models.Model):
     name = models.CharField(max_length=100)
     model_label = models.CharField(max_length=100)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
+    description = models.CharField(max_length=250, blank=True)
 
     def __str__(self):
         return self.name
@@ -73,3 +76,13 @@ class Source(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Keywords(models.Model):
+    uuid = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False)
+    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
+    keywords = ArrayField(models.CharField(max_length=100), blank=True, default=list)
+
+    def __str__(self):
+        return "{}".format(self.scenarioID)

@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 
-STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"))
+STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"), ("unverified", "Unverified"))
 
 
 class Client(models.Model):

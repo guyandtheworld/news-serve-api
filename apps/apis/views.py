@@ -18,7 +18,7 @@ from rest_framework.authtoken.models import Token
 from .models.scenario import (
     Bucket,
     BucketWeight,
-    Scenario
+    Scenario,
 )
 
 from settings.common import EMAIL_HOST_USER
@@ -26,7 +26,8 @@ from settings.common import EMAIL_HOST_USER
 from .models.users import DashUser, Client
 from .serializers import (UserSerializer, DashUserSerializer,
                           AuthCustomTokenSerializer, ScenarioSerializer,
-                          ClientSerializer, BucketSerializer)
+                          ClientSerializer, BucketSerializer,
+                          KeywordSerializer)
 
 
 class GenericGET(views.APIView):
@@ -288,4 +289,88 @@ class ListAllClients(views.APIView):
                 status=status.HTTP_200_OK
             )
         return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
+
+
+class CreateScenario(views.APIView):
+    """
+    Create new scenario with the details from the user
+
+    # Format
+
+    {
+        "name": "<SCENARIO NAME>",
+        "mode": "<auto/portfolio>",
+        "trackingDays": "<NO OF DAYS>",
+        "entityType": "<ENTITY TYPE UUID>",
+        "description": "<SCENARIO DESCRIPTION>"
+    }
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request.data["status"] = "unverified"
+        serializer = ScenarioSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"success": True, "result": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
+
+
+class AddKeywords(views.APIView):
+    """
+    Add keywords for scenarios created by the user
+
+    # Format
+
+    {
+        "keywords": <[KEYWORDS]>,
+        "scenarioID": "<SCENARIO UUID>"
+    }
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = KeywordSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"success": True, "result": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)
+
+
+class AddBuckets(views.APIView):
+    """
+    Add new buckets for scenarios
+
+    # Format
+
+    [{
+        "name": "<BUCKET NAME>",
+        "model_label": "<MODEL LABEL NAME>",
+        "scenarioID": "<SCENARIO UUID>",
+        "description": "<BUCKET DESCRIPTION>"
+    }]
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BucketSerializer(data=request.data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"success": True, "result": serializer.data},
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors,
                         status=status.HTTP_404_NOT_FOUND)

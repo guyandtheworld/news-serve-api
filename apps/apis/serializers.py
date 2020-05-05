@@ -7,7 +7,7 @@ from django.core.validators import validate_email
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
-from .models.scenario import Scenario, Bucket
+from .models.scenario import Scenario, Bucket, Keywords
 from .models.users import DashUser, Client
 
 
@@ -47,6 +47,14 @@ class DashUserSerializer(ModelSerializer):
     class Meta:
         model = DashUser
         fields = ["status", "clientID", "defaultScenario"]
+
+
+class KeywordSerializer(ModelSerializer):
+    keywords = serializers.ListField(child=serializers.CharField(max_length=100))
+
+    class Meta:
+        model = Keywords
+        fields = ["keywords", "scenarioID"]
 
 
 class AuthCustomTokenSerializer(serializers.Serializer):
