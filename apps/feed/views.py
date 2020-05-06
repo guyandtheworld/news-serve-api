@@ -83,28 +83,26 @@ class GetPortfolio(GenericGET):
         # check if user is subscribed to the scenario
         if user and scenario:
             if mode == 'portfolio':
-                if user:
-                    query = """
-                                select * from public.apis_entity as2 where uuid in
-                                (
-                                select "entityID_id" from public.apis_portfolio
-                                where "userID_id" = '{}'
-                                and "scenarioID_id" = '{}'
-                                )
-                            """
-                    portfolio = Entity.objects.raw(
-                        query.format(user.uuid, scenario.uuid))
+                query = """
+                            select * from public.apis_entity as2 where uuid in
+                            (
+                            select "entityID_id" from public.apis_portfolio
+                            where "userID_id" = '{}'
+                            and "scenarioID_id" = '{}'
+                            )
+                        """
+                portfolio = Entity.objects.raw(
+                    query.format(user.uuid, scenario.uuid))
 
-                    portfolio = [c for c in portfolio]
+                portfolio = [c for c in portfolio]
+                if len(portfolio) == 0:
+                    message = "no companies in portfolio"
+                    return Response({"success": True, "data": message})
 
-                    if len(portfolio) == 0:
-                        message = "no companies in portfolio"
-                        return Response({"success": True, "data": message})
-
-                    # fetch articles based on portfolio and
-                    # all the articles of the required companies
-                    # which are from the past 6 month and that's active
-                    entity_ids = [str(c.uuid) for c in portfolio]
+                # fetch articles based on portfolio and
+                # all the articles of the required companies
+                # which are from the past 6 month and that's active
+                entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == 'auto':
                 entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
                 if len(entity_ids) == 0:

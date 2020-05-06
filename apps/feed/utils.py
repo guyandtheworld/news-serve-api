@@ -96,7 +96,12 @@ def attach_story_entities(processed_stories):
     and return the entities found in those stories
     """
     story_ids = [story['uuid'] for story in processed_stories]
-    story_ent = pd.DataFrame(story_entities(story_ids)).astype(str)\
+    temp_entities = story_entities(story_ids)
+
+    if len(temp_entities) == 0:
+        return processed_stories
+
+    story_ent = pd.DataFrame().astype(str)\
         .set_index('uuid').rename({"entityID_id": "entity_id"}, axis=1)
 
     d = {}

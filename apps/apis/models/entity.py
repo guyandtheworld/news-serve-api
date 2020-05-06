@@ -12,9 +12,9 @@ class Entity(models.Model):
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     lei = models.CharField(max_length=100, blank=True)
     dbpediaResource = models.CharField(max_length=100, blank=True)
-    wikiResource = models.CharField(max_length=100, blank=True)
+    wikipedia = models.CharField(max_length=100, blank=True)
     historyProcessed = models.BooleanField(default=False)
-    entityType = models.ForeignKey("EntityType", on_delete=models.PROTECT)
+    typeID = models.ForeignKey("EntityType", on_delete=models.PROTECT)
     entryVerified = models.BooleanField(default=False)
     manualEntry = models.BooleanField(default=False)
 

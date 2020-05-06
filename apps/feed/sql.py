@@ -161,7 +161,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
     if mode == 'portfolio':
         query = """
                 select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, internal_source, "domain", source_country, entity."entityID_id", entity."name", "language",
+                published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
                 "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
                 body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story
                 inner join
@@ -174,7 +174,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 {}
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
-                and entity."entityID_id" in {}
+                and "entityID_id" in {}
                 """.format(bucket_id, model_id, EXTRA_INFO_PORT, entity_ids)
     elif mode == "auto":
         query = """
