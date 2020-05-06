@@ -101,7 +101,7 @@ def attach_story_entities(processed_stories):
     if len(temp_entities) == 0:
         return processed_stories
 
-    story_ent = pd.DataFrame().astype(str)\
+    story_ent = pd.DataFrame(temp_entities).astype(str)\
         .set_index('uuid').rename({"entityID_id": "entity_id"}, axis=1)
 
     d = {}
