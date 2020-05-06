@@ -10,7 +10,7 @@ def dictfetchall(cursor):
     ]
 
 
-def get_scenario_entity_count(scenario_id, type_id, n_entities):
+def get_scenario_entity_count(scenario_id, type_id, n_entities, dates):
     """
     returns list of a entities in a scenario ordered by count, filtered by type
     if needed
@@ -35,13 +35,14 @@ def get_scenario_entity_count(scenario_id, type_id, n_entities):
     where render=True {}) as type
     on entmap."entityID_id" = type.type_id
     inner join
-    (select uuid as story_id from apis_story as story
+    (select uuid as story_id, published_date from apis_story as story
     where story."scenarioID_id" = '{}') as stry
     on entmap."storyID_id"=stry.story_id
+    where published_date > '{}' and published_date < '{}'
     group by "entityID_id"
     order by count DESC
     {}
-    """.format(type_filter, scenario_id, limit)
+    """.format(type_filter, scenario_id, dates[0], dates[1], limit)
 
     with connection.cursor() as cursor:
         cursor.execute(query)

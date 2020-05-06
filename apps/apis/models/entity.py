@@ -12,7 +12,7 @@ class Entity(models.Model):
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     lei = models.CharField(max_length=100, blank=True)
     dbpediaResource = models.CharField(max_length=100, blank=True)
-    wikipedia = models.CharField(max_length=100, blank=True)
+    wikipedia = models.CharField(max_length=200, blank=True)
     historyProcessed = models.BooleanField(default=False)
     typeID = models.ForeignKey("EntityType", on_delete=models.PROTECT)
     entryVerified = models.BooleanField(default=False)
@@ -70,7 +70,7 @@ class StoryEntityRef(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=200)
     typeID = models.ForeignKey("EntityType", on_delete=models.CASCADE)
-    wikipedia = models.CharField(max_length=100, blank=True)
+    wikipedia = models.CharField(max_length=200, blank=True)
     alias = models.UUIDField(null=True, blank=True)
     render = models.BooleanField(default=True)
 

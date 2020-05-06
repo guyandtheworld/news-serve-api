@@ -43,7 +43,7 @@ class GenericGET(views.APIView):
             return obj
         return False
 
-    def getEntitiesFromAuto(self, request, scenario_id):
+    def getEntitiesFromAuto(self, request, scenario_id, dates):
         if 'n_entities' in request.data:
             n_entities = request.data['n_entities']
         else:
@@ -52,7 +52,8 @@ class GenericGET(views.APIView):
             type_id = request.data['type']
         else:
             type_id = None
-        auto_entities = get_scenario_entity_count(scenario_id, type_id, n_entities)
+        auto_entities = get_scenario_entity_count(
+            scenario_id, type_id, n_entities, dates)
         entity_ids = [str(ent['entityID_id']) for ent in auto_entities]
         return entity_ids
 
@@ -104,7 +105,7 @@ class GetPortfolio(GenericGET):
                 # which are from the past 6 month and that's active
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == 'auto':
-                entity_ids = self.getEntitiesFromAuto(request, scenario.uuid)
+                entity_ids = self.getEntitiesFromAuto(request, scenario.uuid, dates)
                 if len(entity_ids) == 0:
                     message = "no entities found"
                     return Response({"success": False, "message": message},
@@ -199,7 +200,7 @@ class GetBucket(GenericGET):
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == 'auto':
                 entity_ids = self.getEntitiesFromAuto(
-                    request, bucket.scenarioID.uuid)
+                    request, bucket.scenarioID.uuid, dates)
 
                 # if no entities exists, return
                 if len(entity_ids) == 0:
