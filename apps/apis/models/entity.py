@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 
 STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"))
@@ -17,6 +18,7 @@ class Entity(models.Model):
     typeID = models.ForeignKey("EntityType", on_delete=models.PROTECT)
     entryVerified = models.BooleanField(default=False)
     manualEntry = models.BooleanField(default=False)
+    keywords = ArrayField(models.CharField(max_length=200), null=True, blank=True)
 
     def __str__(self):
         return self.name
