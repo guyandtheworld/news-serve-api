@@ -28,6 +28,7 @@ class Bucket(models.Model):
     model_label = models.CharField(max_length=100)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     description = models.CharField(max_length=250, blank=True)
+    keywords = ArrayField(models.CharField(max_length=200), null=True, blank=True)
 
     def __str__(self):
         return self.name
