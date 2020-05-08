@@ -45,7 +45,7 @@ class GenericGET(views.APIView):
             return obj
         return False
 
-    def getEntitiesFromAuto(self, request, scenario_id):
+    def getEntitiesFromAuto(self, request, scenario_id, dates):
         if 'n_entities' in request.data:
             n_entities = request.data['n_entities']
         else:
@@ -56,7 +56,8 @@ class GenericGET(views.APIView):
         else:
             type_id = None
 
-        auto_entities = get_scenario_entity_count(scenario_id, type_id, n_entities)
+        auto_entities = get_scenario_entity_count(
+            scenario_id, type_id, n_entities, dates)
         entity_ids = [str(ent['entityID_id']) for ent in auto_entities]
         entity_obj = StoryEntityRef.objects.filter(uuid__in=entity_ids)
         return entity_obj, entity_ids
@@ -89,8 +90,8 @@ class GenericGET(views.APIView):
 
         # check entities without scores
         entity_obj = {str(x.uuid): x for x in portfolio}
-        not_scored = list(set(entity_ids)
-                          - set([str(score["uuid"]) for score in scores]))
+        not_scored = list(set(entity_ids) -
+                          set([str(score["uuid"]) for score in scores]))
         for uuid in not_scored:
             entity = entity_obj[uuid]
             obj = {}
@@ -141,7 +142,7 @@ class GetPortfolioScore(GenericGET):
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
                 portfolio, entity_ids = self.getEntitiesFromAuto(
-                    request, scenario.uuid)
+                    request, scenario.uuid, dates)
 
                 if len(entity_ids) == 0:
                     message = "no entities found"
@@ -201,7 +202,7 @@ class GetSentiment(GenericGET):
             elif mode == "auto":
 
                 portfolio, entity_ids = self.getEntitiesFromAuto(
-                    request, scenario.uuid)
+                    request, scenario.uuid, dates)
 
                 if len(entity_ids) == 0:
                     message = "no entities found"
@@ -261,7 +262,7 @@ class GetNewsCount(GenericGET):
                 entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == "auto":
                 portfolio, entity_ids = self.getEntitiesFromAuto(
-                    request, scenario.uuid)
+                    request, scenario.uuid, dates)
 
                 if len(entity_ids) == 0:
                     message = "no entities found"
