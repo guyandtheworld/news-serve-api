@@ -8,7 +8,8 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
 from .models.scenario import Scenario, Bucket, Keywords
-from .models.users import DashUser, Client
+from .models.users import DashUser, Client, UserScenario
+from .models.entity import Entity
 
 
 def validateEmail(email):
@@ -25,6 +26,12 @@ class ScenarioSerializer(ModelSerializer):
         fields = "__all__"
 
 
+class ScenarioListSerializer(ModelSerializer):
+    class Meta:
+        model = UserScenario
+        fields = ("uuid", "scenarioID")
+
+
 class BucketSerializer(ModelSerializer):
     class Meta:
         model = Bucket
@@ -34,6 +41,12 @@ class BucketSerializer(ModelSerializer):
 class ClientSerializer(ModelSerializer):
     class Meta:
         model = Client
+        fields = "__all__"
+
+
+class UserScenarioSerializer(ModelSerializer):
+    class Meta:
+        model = UserScenario
         fields = "__all__"
 
 
@@ -56,6 +69,25 @@ class KeywordSerializer(ModelSerializer):
         model = Keywords
         fields = ["keywords", "scenarioID"]
 
+
+class EntityDetailSerializer(ModelSerializer):
+    class Meta:
+        model = Entity
+        fields = ["uuid", "name", "typeID", "keywords"]
+
+
+class BucketDetailSerializer(ModelSerializer):
+    class Meta:
+        model = Bucket
+        fields = ["uuid", "name", "keywords"]
+
+
+class ScenarioDetailSerializer(ModelSerializer):
+    entity = EntityDetailSerializer(many=True)
+    bucket = BucketDetailSerializer(many=True)
+    class Meta:
+        model = Scenario
+        fields = ["uuid", "name", "trackingDays", "entity", "bucket"]
 
 class AuthCustomTokenSerializer(serializers.Serializer):
     """

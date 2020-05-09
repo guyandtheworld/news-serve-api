@@ -10,7 +10,8 @@ class Entity(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
+    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE,
+                                   related_name='entity')
     lei = models.CharField(max_length=100, blank=True)
     dbpediaResource = models.CharField(max_length=100, blank=True)
     wikipedia = models.CharField(max_length=200, blank=True)

@@ -23,11 +23,12 @@ from .models.scenario import (
 
 from settings.common import EMAIL_HOST_USER
 
-from .models.users import DashUser, Client
+from .models.users import DashUser, Client, UserScenario
 from .serializers import (UserSerializer, DashUserSerializer,
                           AuthCustomTokenSerializer, ScenarioSerializer,
                           ClientSerializer, BucketSerializer,
-                          KeywordSerializer)
+                          KeywordSerializer, ScenarioListSerializer,
+                          UserScenarioSerializer, ScenarioDetailSerializer)
 
 
 class GenericGET(views.APIView):
@@ -125,6 +126,10 @@ class SignUp(CreateAPIView):
                 clientID=client,
                 defaultScenario=scenario
             )
+
+            # add default scenario to user scenario
+            UserScenario.objects.create(userID=dash_user_obj,
+                                        scenarioID=scenario)
 
             # send confirmation email to the new user
             subject = 'Thank you for signing up with Alrt.ai'
@@ -359,6 +364,7 @@ class AddBuckets(views.APIView):
         "model_label": "<MODEL LABEL NAME>",
         "scenarioID": "<SCENARIO UUID>",
         "description": "<BUCKET DESCRIPTION>"
+        "keywords": ["List of Keywords"]
     }]
     """
     authentication_classes = [TokenAuthentication]
@@ -373,4 +379,120 @@ class AddBuckets(views.APIView):
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors,
+                        status=status.HTTP_404_NOT_FOUND)
+
+
+class ListUserScenario(views.APIView):
+    """
+    List scenarios subscribed by a user
+
+    # Format
+
+    {
+        "uuid": "<USER UUID>"
+    }
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = get_object_or_404(DashUser, uuid=request.data["uuid"])
+        scenarios = UserScenario.objects.filter(userID=user)
+
+        if len(scenarios) > 0:
+            # fetch scenarios subscribed by the user
+            serializer = ScenarioListSerializer(scenarios, many=True)
+            return Response({"success": True, "length": len(scenarios),
+                             "data": serializer.data}, status=status.HTTP_200_OK
+                            )
+        return Response({"success": False}, status=status.HTTP_404_NOT_FOUND
+                        )
+
+
+class SubscribeScenario(views.APIView):
+    # To allow user to subscribe and unsubscribe scenarios
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        To subscribe a new scenario
+
+        # Format
+        {
+            "userID": "<USER UUID>",
+            "scenarioID": "<SCENARIO UUID>"
+        }
+        """
+        user = get_object_or_404(DashUser, uuid=request.data["userID"])
+        scenario = get_object_or_404(Scenario, 
+                                     uuid=request.data["scenarioID"])
+        user_scenario = UserScenario.objects.filter(userID=user,
+                                                    scenarioID=scenario)
+
+        if user_scenario:
+            msg = scenario.name+" scenario is already subscribed"
+            return Response({"success": False, "data": msg},
+                        status=status.HTTP_404_NOT_FOUND)
+        else:
+            serializer = UserScenarioSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(
+                    {"success": True, "result": serializer.data},
+                    status=status.HTTP_201_CREATED
+                )
+            return Response({"success": False},
+                            status=status.HTTP_404_NOT_FOUND)
+
+    def delete(self, request):
+        """
+        To unsubscribe existing scenario of the user
+
+        # Format
+        {
+            "uuid": "<USERSCENARIO UUID>"
+        }
+        """
+
+        user_scenario = get_object_or_404(UserScenario, uuid=request.data["uuid"])
+        msg = "Unsubscribed from "+user_scenario.scenarioID.name
+        user_scenario.delete()
+        return Response({"success": True, "data": msg},
+                        status=status.HTTP_200_OK
+                        )
+
+
+class ListScenarioDetails(views.APIView):
+    """
+        To list the scenario, entities and buckets subscribed by the user
+
+        # Format
+        {
+            "uuid": "<USER UUID>"
+        }
+        """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = DashUser.objects.get(uuid=request.data["uuid"])
+        user_scenarios = UserScenario.objects.filter(userID=user)
+
+        if len(user_scenarios)>0:
+            # fetch scenarios details of the user
+            scenario_list = []
+            for user_scenario in user_scenarios:
+                scenario = Scenario.objects.get(uuid=user_scenario.scenarioID.uuid)
+                scenario_list.append(scenario)
+
+            serializer = ScenarioDetailSerializer(scenario_list, many=True)
+            
+            return Response({"success": True, "length": len(user_scenarios),
+                             "data": serializer.data},
+                            status=status.HTTP_200_OK)
+        return Response({"success": False},
                         status=status.HTTP_404_NOT_FOUND)

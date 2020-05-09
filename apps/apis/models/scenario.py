@@ -26,7 +26,8 @@ class Bucket(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     model_label = models.CharField(max_length=100)
-    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
+    scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE,
+                                   related_name='bucket')
     description = models.CharField(max_length=250, blank=True)
     keywords = ArrayField(models.CharField(max_length=200), null=True, blank=True)
 

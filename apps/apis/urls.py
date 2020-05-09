@@ -18,8 +18,11 @@ urlpatterns = [
     path("getbucketweights", views.GetBucketWeights.as_view()),
     path("listallscenario", views.ListAllScenario.as_view()),
     path("listallclients", views.ListAllClients.as_view()),
+    path("listuserscenario", views.ListUserScenario.as_view()),
+    path("listscenariodetails", views.ListScenarioDetails.as_view()),
     path("logout", views.Logout.as_view()),
     path("signup", views.SignUp.as_view()),
+    path("subscribescenario", views.SubscribeScenario.as_view()),
 
     # To add custom forgot password page add template_name = "path to html" as argument to as_view()
     path("reset_password", auth_views.PasswordResetView.as_view(), name="password_reset"),
