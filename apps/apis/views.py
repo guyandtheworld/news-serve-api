@@ -395,7 +395,7 @@ class ListUserScenario(views.APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
+    def post(self, request):
 
         user = get_object_or_404(DashUser, uuid=request.data["uuid"])
         scenarios = UserScenario.objects.filter(userID=user)
