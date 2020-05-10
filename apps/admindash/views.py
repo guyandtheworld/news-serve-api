@@ -6,16 +6,16 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAdminUser
 
-from apis.models.entity import Entity, Alias
+from apis.models.entity import Entity
 from apis.models.scenario import Scenario
 
 from .serializers import (VerifiableEntitySerializer, EntityUpdateSerializer,
-                          AliasUpdateSerializer, UnverifiedScenarioSerializer)
+                          UnverifiedScenarioSerializer)
 
 
 class ListVerifiableEntities(views.APIView):
     """
-    List all entities and aliases that are not verfied by the user
+    List all entities that are not verfied by the user
 
     """
 
@@ -73,6 +73,7 @@ class UpdateEntities(views.APIView):
         "manualEntry": true,
         "entityType": " ",
         "scenarioID": " "
+        "keywords": [""]
         }
         """
 
@@ -80,52 +81,6 @@ class UpdateEntities(views.APIView):
 
         serializer = EntityUpdateSerializer(entity, data=request.data,
                                             partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": True, "data": serializer.data},
-                            status=status.HTTP_200_OK
-                            )
-
-
-class UpdateAlias(views.APIView):
-    # Make changes to alias added by the user after verification
-
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
-
-    def delete(self, request):
-        """
-        Delete alias added by the user after verification
-
-        # Format
-
-        {
-            "alias": "<ALIAS UUID>"
-        }
-        """
-
-        alias = get_object_or_404(Alias, request.data["alias"])
-        alias.delete()
-        msg = "alias deleted"
-        return Response({"success": True, "data": msg},
-                        status=status.HTTP_200_OK
-                        )
-
-    def put(self, request):
-        """
-        Update alias added by the user after verification
-
-        # Format
-
-        {
-            "alias": "<ALIAS UUID>",
-            "name": "<NEW ALIAS NAME>"
-        }
-        """
-
-        alias = get_object_or_404(Alias, uuid=request.data["alias"])
-
-        serializer = AliasUpdateSerializer(alias, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response({"success": True, "data": serializer.data},

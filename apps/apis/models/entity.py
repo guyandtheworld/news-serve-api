@@ -28,20 +28,6 @@ class Entity(models.Model):
         verbose_name_plural = "entities"
 
 
-class Alias(models.Model):
-    uuid = models.UUIDField(
-        primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=100)
-    entityID = models.ForeignKey("Entity", on_delete=models.CASCADE,
-                                 related_name='alias')
-
-    def __str__(self):
-        return "{} - {}".format(self.name, self.entityID.name)
-
-    class Meta:
-        verbose_name_plural = "alias"
-
-
 class LastScrape(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)

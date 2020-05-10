@@ -12,7 +12,6 @@ from apis.models.scenario import Scenario
 from .utils import get_anchors, get_alias
 from .serializers import (EntitySerializer,
                           EntityListSerializer,
-                          AliasSerializer,
                           StoryEntityRefSerializer)
 
 
@@ -68,7 +67,7 @@ class EntityAlias(views.APIView):
 
 class ListPortfolio(views.APIView):
     """
-    List all Entities and Alias in the Portfolio of a Particular User
+    List all Entities in the Portfolio of a Particular User
 
     # Format
 
@@ -109,7 +108,7 @@ class ListPortfolio(views.APIView):
 
 class ListScenarioEntities(views.APIView):
     """
-    List all Entities and Aliases being Tracked in a Scenario
+    List all Entities being Tracked in a Scenario
 
     # Format
 
@@ -204,7 +203,8 @@ class AddEntity(views.APIView):
         "wikiResource": "https://en.wikipedia.org/wiki/Deloitte",
         "manualEntry": true,
         "entityType": <ENTITY TYPE>,
-        "scenarioID": "<SCENARIO UUID>"
+        "scenarioID": "<SCENARIO UUID>",
+        "keywords": "[<List of Keywords>]"
     }
     """
     authentication_classes = [TokenAuthentication]
@@ -229,36 +229,6 @@ class AddEntity(views.APIView):
                     {"success": True, "entity_uuid": entity.uuid},
                     status=status.HTTP_201_CREATED
                 )
-        msg = "no given user or scenario or entity exists"
-        return Response({"success": False, "data": msg},
-                        status=status.HTTP_404_NOT_FOUND)
-
-
-class AddAlias(views.APIView):
-    """
-    Create Alias - You can add multiple Aliases
-
-    # Format
-
-    [{
-        "name": "<ENTITY NAME>",
-        "entityID": "<ENTITY UUID>"
-    }]
-    """
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        alias_serializer = AliasSerializer(data=request.data, many=True)
-        if alias_serializer.is_valid():
-            alias = alias_serializer.save()
-            alias_uuid = []
-            for obj in alias:
-                alias_uuid.append(obj.uuid)
-            return Response(
-                {"success": True, "alias_uuid": alias_uuid},
-                status=status.HTTP_201_CREATED
-            )
         msg = "no given user or scenario or entity exists"
         return Response({"success": False, "data": msg},
                         status=status.HTTP_404_NOT_FOUND)
