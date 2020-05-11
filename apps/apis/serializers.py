@@ -27,9 +27,10 @@ class ScenarioSerializer(ModelSerializer):
 
 
 class ScenarioListSerializer(ModelSerializer):
+    scenario_name = serializers.CharField(source='scenarioID.name', read_only=True)
     class Meta:
         model = UserScenario
-        fields = "__all__"
+        fields = ["uuid", "scenarioID", "scenario_name"]
 
 
 class BucketSerializer(ModelSerializer):
