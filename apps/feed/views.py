@@ -176,9 +176,6 @@ class GetBucket(GenericGET):
         mode = self.getMode(request)
 
         if user and bucket:
-            if user.defaultScenario != bucket.scenarioID:
-                message = "you're not subscribed to this scenario'"
-                return Response({"success": False, "message": message})
             if mode == 'portfolio':
                 query = """
                             select * from public.apis_entity as2 where uuid in
@@ -243,10 +240,6 @@ class GetBucketEntity(GenericGET):
             entity = get_object_or_404(StoryEntityRef, uuid=request.data["entity"])
 
         if bucket and entity:
-            if user.defaultScenario != bucket.scenarioID:
-                message = "you're not subscribed to this scenario'"
-                return Response({"success": False, "message": message})
-
             if mode == "portfolio" and entity.scenarioID != bucket.scenarioID:
                 message = "this entity is not tracked under this scenario'"
                 return Response({"success": False, "message": message})

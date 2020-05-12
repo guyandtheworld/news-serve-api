@@ -125,11 +125,6 @@ class GetPortfolioScore(GenericGET):
             portfolio = []
             entity_ids = []
 
-            # check if user is subscribed to the scenario
-            if user.defaultScenario != scenario:
-                message = "user is not subscribed to the scenario"
-                return Response({"success": False, "message": message})
-
             if mode == "portfolio":
 
                 # fetch the portfolio of a particular user
@@ -184,10 +179,6 @@ class GetSentiment(GenericGET):
         if user and scenario:
             portfolio = []
             entity_ids = []
-
-            if user.defaultScenario != scenario:
-                message = "user is not subscribed to the scenario"
-                return Response({"success": False, "message": message})
 
             if mode == "portfolio":
 
@@ -246,10 +237,6 @@ class GetNewsCount(GenericGET):
             portfolio = []
             entity_ids = []
 
-            if user.defaultScenario != scenario:
-                message = "user is not subscribed to the scenario"
-                return Response({"success": False, "message": message})
-
             if mode == "portfolio":
 
                 portfolio = self.getPortfolio(user.uuid, scenario.uuid)
@@ -297,10 +284,6 @@ class GetBucketScore(GenericGET):
         dates = extract_timeperiod(request)
 
         if user and scenario:
-            # check if user is subscribed to the scenario
-            if user.defaultScenario != scenario:
-                message = "user is not subscribed to the scenario"
-                return Response({"success": False, "message": message})
 
             # get all buckets except the other model
             buckets = Bucket.objects.filter(~Q(model_label="other"),
@@ -354,11 +337,6 @@ class GetEntityBucketScore(GenericGET):
         dates = extract_timeperiod(request)
 
         if user and scenario and entity:
-
-            # check if user is subscribed to the scenario
-            if user.defaultScenario != scenario:
-                message = "user is not subscribed to the scenario"
-                return Response({"success": False, "message": message})
 
             # get all buckets except the other model
             buckets = Bucket.objects.filter(~Q(model_label="other"),
