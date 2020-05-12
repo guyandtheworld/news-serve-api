@@ -82,9 +82,10 @@ def score_in_bulk(articles, bucket=False, sentiment=True, mode="portfolio"):
 
     # use unique hash to eliminate duplicates
     df.drop_duplicates("unique_hash", inplace=True)
-
+    df.drop(["body_sentiment", "title_sentiment", "unique_hash",
+             "search_keyword"], axis=1, inplace=True)
     df = df.sort_values(['hotness'], ascending=False)
-    result_sample = df.head(200)
+    result_sample = df.head(50)
     result_sample['uuid'] = result_sample['uuid'].apply(str)
     result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
     return result_sample.to_dict(orient='records')
