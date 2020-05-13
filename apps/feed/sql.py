@@ -17,6 +17,11 @@ EXTRA_INFO_PORT = """
             (select "storyID_id", (array_agg(sentiment))[1] as sentiment
             from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
             on story.uuid = body_sentiment."storyID_id"
+            left join
+            (select "storyID_id", "cluster"
+            from ml_clustermap clustermap inner join
+            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
+            on story.uuid = ml_cluster."storyID_id"
             """
 
 EXTRA_INFO_AUTO = """
@@ -32,6 +37,11 @@ EXTRA_INFO_AUTO = """
             (select "storyID_id", (array_agg(sentiment))[1] as sentiment
             from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
             on entitymap."storyID_id" = body_sentiment."storyID_id"
+            left join
+            (select "storyID_id", "cluster"
+            from ml_clustermap clustermap inner join
+            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
+            on story.uuid = ml_cluster."storyID_id"
             """
 
 
@@ -78,7 +88,8 @@ def user_portfolio(entity_ids, dates, mode):
         query = """
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, "cluster"
                 FROM public.apis_story as story
                 {}
                 where "language" in ('english', 'US', 'CA', 'AU', 'IE')
@@ -89,7 +100,8 @@ def user_portfolio(entity_ids, dates, mode):
         query = """
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, "domain", source_country, entitymap."entityID_id", entref."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, "cluster"
                 from  apis_storyentitymap entitymap
                 inner join apis_story story on entitymap."storyID_id" = story.uuid
                 {}
@@ -120,7 +132,8 @@ def user_entity(entity_id, dates, mode):
         query = """
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, "cluster"
                 FROM public.apis_story as story
                 {}
                 where "language" in ('english', 'US', 'CA', 'AU', 'IE')
@@ -131,7 +144,8 @@ def user_entity(entity_id, dates, mode):
         query = """
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, "domain", source_country, entitymap."entityID_id", entref."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment, body_sentiment.sentiment as body_sentiment
+                title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, "cluster"
                 from  apis_storyentitymap entitymap
                 inner join apis_story story on entitymap."storyID_id" = story.uuid
                 {}
@@ -163,7 +177,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
                 "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story
+                body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story, "cluster"
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
                 (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
@@ -181,7 +195,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, internal_source, "domain", source_country, entitymap."entityID_id", entref."name", "language",
                 "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body
+                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster"
                 from apis_storyentitymap entitymap
                 inner join apis_story story
                 on entitymap."storyID_id" = story.uuid
@@ -221,7 +235,7 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
                 "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story
+                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster" from apis_story story
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
                 (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
@@ -239,7 +253,7 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, internal_source, "domain", source_country, entitymap."entityID_id", entref."name", "language",
                 "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body
+                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster"
                 from apis_storyentitymap entitymap
                 inner join apis_story story
                 on entitymap."storyID_id" = story.uuid
