@@ -61,6 +61,9 @@ class StoryEntityRef(models.Model):
     typeID = models.ForeignKey("EntityType", on_delete=models.CASCADE)
     wikipedia = models.CharField(max_length=200, blank=True)
     render = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey("DashUser", null=True, on_delete=models.SET_NULL)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     def __str__(self):
         return "{} - {}".format(self.name, self.typeID.name)
@@ -74,6 +77,7 @@ class StoryEntityMap(models.Model):
     # change null=True later
     salience = models.FloatField(null=True)
     mentions = models.IntegerField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return "{} - {}".format(self.storyID.title, self.entityID.name)
