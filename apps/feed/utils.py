@@ -88,7 +88,7 @@ def score_in_bulk(articles, bucket=False, sentiment=True, mode="portfolio"):
     result_sample = df.head(50)
     result_sample['uuid'] = result_sample['uuid'].apply(str)
     result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
-    result_sample = result_sample.fillna('')
+    result_sample = result_sample.fillna(False)
     return result_sample.to_dict(orient='records')
 
 
