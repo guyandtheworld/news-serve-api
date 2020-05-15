@@ -177,7 +177,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
                 "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body from apis_story story, "cluster"
+                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster" from apis_story story
                 inner join
                 (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
                 (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
