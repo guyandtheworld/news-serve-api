@@ -66,7 +66,7 @@ def hotness(article, bucket, sentiment, mode):
         x = timeDiff - 1
         baseScore = baseScore * math.exp(-.2 * x * x)
 
-    return baseScore
+    return round(baseScore, 3)
 
 
 def score_in_bulk(articles, bucket=False, sentiment=True, mode="portfolio"):
@@ -88,6 +88,7 @@ def score_in_bulk(articles, bucket=False, sentiment=True, mode="portfolio"):
     result_sample = df.head(50)
     result_sample['uuid'] = result_sample['uuid'].apply(str)
     result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
+    result_sample = result_sample.fillna('')
     return result_sample.to_dict(orient='records')
 
 
