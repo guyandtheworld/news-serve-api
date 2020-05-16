@@ -220,8 +220,8 @@ class SentimentViz(GenericGET):
         return Response({"success": True, "length": len(data),
                          "data": data},
                         status=status.HTTP_200_OK)
-                        
-class GetGlobeData(GenericGET):
+
+class GetGlobeData(views.APIView):
     """
     return data for the landing page globe, take in a date range
     """

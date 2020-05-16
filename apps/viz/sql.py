@@ -193,7 +193,6 @@ def get_entity_stories(dates, entity_id, mode):
         rows = dictfetchall(cursor)
     return rows
 
-
 def get_count_per_country(dates):
     start_date = "'{}'".format(dates[0])
     end_date = "'{}'".format(dates[1])
