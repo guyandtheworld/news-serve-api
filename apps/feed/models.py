@@ -28,6 +28,7 @@ class ClusterMap(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False)
     storyID = models.ForeignKey("apis.Story", on_delete=models.CASCADE)
     clusterID = models.ForeignKey("Cluster", on_delete=models.CASCADE)
+    published_date = models.DateTimeField()
 
     class Meta:
         db_table = 'ml_clustermap'
