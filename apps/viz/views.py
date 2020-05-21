@@ -221,18 +221,20 @@ class SentimentViz(GenericGET):
                          "data": data},
                         status=status.HTTP_200_OK)
 
+
 class GetGlobeData(views.APIView):
     """
     return data for the landing page globe, take in a date range
     """
-    def post(self, request):
-        dates = extract_timeperiod(request)
-        data = get_count_per_country(dates)
+
+    def get(self, request):
+        data = get_count_per_country()
         df = {}
         for country in data:
             try:
-                df[countries.search_fuzzy(country[0])[0].alpha_3] = {'storycount':country[1]}
+                df[countries.search_fuzzy(country[0])[0].alpha_3] = {
+                    'storycount': country[1]}
             except:
                 pass
 
-        return Response({"success": True, "data":df})
+        return Response({"success": True, "data": df})
