@@ -92,7 +92,7 @@ def user_portfolio(entity_ids, dates, mode):
                 body_sentiment.sentiment as body_sentiment, "cluster"
                 FROM public.apis_story as story
                 {}
-                where "language" in ('IE', 'english', 'US', 'SG', 'GB', 'AU', 'NZ')
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and "entityID_id" in {}
                 and published_date > %s and published_date <= %s
             """.format(EXTRA_INFO_PORT, ids_str)
@@ -105,7 +105,7 @@ def user_portfolio(entity_ids, dates, mode):
                 from  apis_storyentitymap entitymap
                 inner join apis_story story on entitymap."storyID_id" = story.uuid
                 {}
-                where "language" in ('IE', 'english', 'US', 'SG', 'GB', 'AU', 'NZ')
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" in {}
                 and story_body.body is not null
                 and published_date > %s and published_date <= %s
@@ -136,7 +136,7 @@ def user_entity(entity_id, dates, mode):
                 body_sentiment.sentiment as body_sentiment, "cluster"
                 FROM public.apis_story as story
                 {}
-                where "language" in ('IE', 'english', 'US', 'SG', 'GB', 'AU', 'NZ')
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and "entityID_id" = {}
                 and published_date > %s and published_date <= %s
                 """.format(EXTRA_INFO_PORT, id_str)
@@ -149,7 +149,7 @@ def user_entity(entity_id, dates, mode):
                 from  apis_storyentitymap entitymap
                 inner join apis_story story on entitymap."storyID_id" = story.uuid
                 {}
-                where "language" in ('IE', 'english', 'US', 'SG', 'GB', 'AU', 'NZ')
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" = {}
                 and published_date > %s and published_date <= %s
                 """.format(EXTRA_INFO_AUTO, id_str)
@@ -186,7 +186,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 on src.uuid = bucket_score."sourceID_id") tbl
                 on story.uuid = tbl."storyID_id"
                 {}
-                and "language" in ('IE', 'english', 'US', 'SG', 'GB', 'AU', 'NZ')
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and "entityID_id" in {}
                 """.format(bucket_id, model_id, EXTRA_INFO_PORT, entity_ids)
@@ -207,7 +207,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 on src.uuid = bucket_score."sourceID_id") tbl
                 on story.uuid = tbl."storyID_id"
                 {}
-                and "language" in ('IE', 'english', 'US', 'SG', 'GB', 'AU', 'NZ')
+                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and entitymap."entityID_id" in {}
                 """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_ids)
