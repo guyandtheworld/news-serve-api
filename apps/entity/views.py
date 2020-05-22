@@ -292,7 +292,10 @@ class EntitySearch(views.APIView):
             msg = "Please provide a better description"
             return Response({"success": False, "data": msg},
                             status=status.HTTP_406_NOT_ACCEPTABLE)
-        entities = StoryEntityRef.objects.filter(name__icontains=keyword)
+
+        # return entity where wikipedia link is present
+        entities = StoryEntityRef.objects.filter(
+            name__icontains=keyword).exclude(wikipedia="")
         serializer = StoryEntityRefSerializer(entities, many=True)
         return Response(
             {"success": True, "result": serializer.data},
