@@ -88,6 +88,9 @@ class EntityScore(models.Model):
     bucketID = models.ForeignKey("Bucket", on_delete=models.CASCADE)
     modelID = models.ForeignKey("ModelDetail", on_delete=models.CASCADE)
     grossScore = models.FloatField()
+    updated_by = models.ForeignKey("DashUser", null=True, on_delete=models.SET_NULL)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    last_value = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
         return "{} - {}".format(self.storyID.title, self.bucketID.name)

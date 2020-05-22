@@ -79,6 +79,9 @@ class StoryEntityMap(models.Model):
     salience = models.FloatField(null=True)
     mentions = models.IntegerField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_by = models.ForeignKey("DashUser", null=True, on_delete=models.SET_NULL)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    last_value = models.CharField(max_length=200, blank=True, null=True)
 
     def __str__(self):
         return "{} - {}".format(self.storyID.title, self.entityID.name)

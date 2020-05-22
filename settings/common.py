@@ -128,6 +128,8 @@ CORS_ORIGIN_WHITELIST = [
     "https://alrt.herokuapp.com",
     "http://dash.alrt.ai",
     "https://dash.alrt.ai",
+    "https://landing-bhkat7prtq-de.a.run.app",
+    "http://localhost:3000"
 ]
 
 
