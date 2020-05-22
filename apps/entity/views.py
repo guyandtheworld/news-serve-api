@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator
 
 from rest_framework import status
 from rest_framework import views
@@ -9,6 +10,10 @@ from rest_framework.permissions import IsAuthenticated
 from apis.models.users import DashUser, Portfolio
 from apis.models.entity import Entity, StoryEntityRef
 from apis.models.scenario import Scenario
+from score.views import GenericGET
+from score.sql import portfolio_count
+from apis.utils import extract_timeperiod
+
 from .utils import get_anchors, get_alias
 from .serializers import (EntitySerializer,
                           EntityListSerializer,
@@ -293,3 +298,62 @@ class EntitySearch(views.APIView):
             {"success": True, "result": serializer.data},
             status=status.HTTP_200_OK
         )
+
+
+class ManageEntity(GenericGET):
+    """
+    Return the latest or the most popular
+    entities in the database based on the
+    filter
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        scenario = self.getSingleObjectFromPOST(
+            request, "scenario", "uuid", Scenario)
+
+        dates = extract_timeperiod(request)
+
+        if request.data["filter"] == "latest":
+
+            entities = StoryEntityRef.objects.filter(
+                render=True).order_by('-created_at')
+
+            paginator = Paginator(entities, 50)
+            page = request.GET.get('page')
+
+            try:
+                entities = paginator.page(page)
+            except Exception:
+                entities = paginator.page(1)
+
+            entity_ids = [str(entity.uuid) for entity in entities]
+
+            entity_scores = portfolio_count(entity_ids, dates, mode="auto")
+
+            scores = self.getScores(entity_scores, entities, entity_ids,
+                                    metric="news_count",
+                                    func=lambda x: x)
+        elif request.data["filter"] == "popular":
+            portfolio, entity_ids = self.getEntitiesFromAuto(
+                request, scenario.uuid, dates)
+
+            if len(entity_ids) == 0:
+                message = "no entities found"
+                return Response({"success": False, "message": message},
+                                status=status.HTTP_404_NOT_FOUND)
+
+            entity_scores = portfolio_count(entity_ids, dates, mode="auto")
+
+            scores = self.getScores(entity_scores, portfolio, entity_ids,
+                                    metric="news_count",
+                                    func=lambda x: x)
+        else:
+            return Response({"success": False, "message": "filter not specified"},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"success": True,
+                         "samples": len(scores),
+                         "data": scores},
+                        status=status.HTTP_200_OK)

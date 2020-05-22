@@ -156,7 +156,7 @@ def portfolio_count(entity_ids, dates, mode):
     else:
         query = """
                 select entity.uuid, entity.name, entity_type."name" as "type",
-                entity.wikipedia, news_count from
+                entity.wikipedia, entity.created_at::date, news_count from
                 (select "entityID_id", count(*) as news_count
                 from apis_storyentitymap as2
                 inner join

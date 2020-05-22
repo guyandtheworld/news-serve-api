@@ -427,15 +427,15 @@ class SubscribeScenario(views.APIView):
         }
         """
         user = get_object_or_404(DashUser, uuid=request.data["userID"])
-        scenario = get_object_or_404(Scenario, 
+        scenario = get_object_or_404(Scenario,
                                      uuid=request.data["scenarioID"])
         user_scenario = UserScenario.objects.filter(userID=user,
                                                     scenarioID=scenario)
 
         if user_scenario:
-            msg = scenario.name+" scenario is already subscribed"
+            msg = scenario.name + " scenario is already subscribed"
             return Response({"success": False, "data": msg},
-                        status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_404_NOT_FOUND)
         else:
             serializer = UserScenarioSerializer(data=request.data)
             if serializer.is_valid():
@@ -458,7 +458,7 @@ class SubscribeScenario(views.APIView):
         """
 
         user_scenario = get_object_or_404(UserScenario, uuid=request.data["uuid"])
-        msg = "Unsubscribed from "+user_scenario.scenarioID.name
+        msg = "Unsubscribed from " + user_scenario.scenarioID.name
         user_scenario.delete()
         return Response({"success": True, "data": msg},
                         status=status.HTTP_200_OK
@@ -482,7 +482,7 @@ class ListScenarioDetails(views.APIView):
         user = DashUser.objects.get(uuid=request.data["uuid"])
         user_scenarios = UserScenario.objects.filter(userID=user)
 
-        if len(user_scenarios)>0:
+        if len(user_scenarios) > 0:
             # fetch scenarios details of the user
             scenario_list = []
             for user_scenario in user_scenarios:
@@ -490,7 +490,7 @@ class ListScenarioDetails(views.APIView):
                 scenario_list.append(scenario)
 
             serializer = ScenarioDetailSerializer(scenario_list, many=True)
-            
+
             return Response({"success": True, "length": len(user_scenarios),
                              "data": serializer.data},
                             status=status.HTTP_200_OK)

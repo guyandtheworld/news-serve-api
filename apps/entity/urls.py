@@ -10,5 +10,6 @@ urlpatterns = [
     path("addentity", views.AddEntity.as_view()),
     path("addtoportfolio", views.AddToPortfolio.as_view()),
     path("entityref", views.EntityRef.as_view()),
-    path("search", views.EntitySearch.as_view())
+    path("search", views.EntitySearch.as_view()),
+    path("manage", views.ManageEntity.as_view())
 ]

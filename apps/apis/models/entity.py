@@ -17,6 +17,7 @@ class Entity(models.Model):
     wikipedia = models.CharField(max_length=200, blank=True)
     historyProcessed = models.BooleanField(default=False)
     typeID = models.ForeignKey("EntityType", on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
     entryVerified = models.BooleanField(default=False)
     manualEntry = models.BooleanField(default=False)
     keywords = ArrayField(models.CharField(max_length=200), null=True, blank=True)

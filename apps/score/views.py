@@ -99,6 +99,7 @@ class GenericGET(views.APIView):
             obj["name"] = entity.name
             obj["type"] = entity.typeID.name
             obj["wikipedia"] = entity.wikipedia
+            obj["created"] = entity.created_at
             obj[metric] = 0.0
             scores.append(obj)
 
