@@ -12,10 +12,13 @@ class EntityTypeSerializer(ModelSerializer):
         model = EntityType
         fields = "__all__"
 
+
 class AliasListSerializer(ModelSerializer):
+    entity_type = serializers.CharField(source='typeID.name', read_only=True)
     class Meta:
         model = Alias
-        fields = "__all__"
+        fields = [field.name for field in model._meta.fields]
+        fields.append('entity_type')
 
 
 class ParentNameSerializer(ModelSerializer):
