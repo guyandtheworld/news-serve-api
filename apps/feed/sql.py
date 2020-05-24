@@ -5,6 +5,10 @@ from django.db import connection
 # get entities from title and body
 # get sentiment from title and body
 EXTRA_INFO_PORT = """
+            left join (select distinct "storyID_id", "cluster"
+            from ml_clustermap clustermap inner join
+            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
+            on story.uuid = ml_cluster."storyID_id"
             inner join apis_entity entity on story."entityID_id" = entity.uuid
             inner join (select "storyID_id", (array_agg(body))[1] as body
             from apis_storybody group by "storyID_id") story_body
@@ -17,14 +21,13 @@ EXTRA_INFO_PORT = """
             (select "storyID_id", (array_agg(sentiment))[1] as sentiment
             from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
             on story.uuid = body_sentiment."storyID_id"
-            left join
-            (select "storyID_id", "cluster"
-            from ml_clustermap clustermap inner join
-            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
-            on story.uuid = ml_cluster."storyID_id"
             """
 
 EXTRA_INFO_AUTO = """
+            left join (select distinct "storyID_id", "cluster"
+            from ml_clustermap clustermap inner join
+            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
+            on story.uuid = ml_cluster."storyID_id"
             inner join apis_storyentityref entref on entitymap."entityID_id" = entref.uuid
             inner join (select "storyID_id", (array_agg(body))[1] as body
             from apis_storybody group by "storyID_id") story_body
@@ -37,11 +40,6 @@ EXTRA_INFO_AUTO = """
             (select "storyID_id", (array_agg(sentiment))[1] as sentiment
             from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
             on entitymap."storyID_id" = body_sentiment."storyID_id"
-            left join
-            (select "storyID_id", "cluster"
-            from ml_clustermap clustermap inner join
-            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
-            on story.uuid = ml_cluster."storyID_id"
             """
 
 
