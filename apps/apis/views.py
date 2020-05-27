@@ -80,6 +80,7 @@ class GetUserUUID(views.APIView):
         if dash_user:
             content = {
                 'user': dash_user.uuid,
+                'admin': dash_user.user.is_staff
             }
             return Response(content,
                             status=status.HTTP_200_OK)
