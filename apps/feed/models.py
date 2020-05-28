@@ -60,6 +60,7 @@ class StoryWarehouse(models.Model):
     scenario_id = models.UUIDField()
     story_body = models.CharField(max_length=10000)
     timestamp = models.DateTimeField()
+    cluster = models.IntegerField()
     scores = JSONField()  # gross score, source score
     entities = JSONField()
     hotness = JSONField()
