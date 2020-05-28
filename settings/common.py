@@ -129,7 +129,8 @@ CORS_ORIGIN_WHITELIST = [
     "http://dash.alrt.ai",
     "https://dash.alrt.ai",
     "https://landing-bhkat7prtq-de.a.run.app",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://admin-dash-bhkat7prtq-de.a.run.app"
 ]
 
 
