@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 
-from apis.models.entity import Entity, StoryEntityRef, EntityType
+from apis.models.entity import Entity, StoryEntityRef
 from apis.models.users import Portfolio
 
 

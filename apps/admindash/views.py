@@ -9,7 +9,7 @@ from rest_framework.permissions import IsAdminUser
 from apis.models.entity import Entity
 from apis.models.scenario import Scenario
 
-from .serializers import (VerifiableEntitySerializer, 
+from .serializers import (VerifiableEntitySerializer,
                           EntityUpdateSerializer,
                           UnverifiedScenarioSerializer,
                           ScenarioSerializer)

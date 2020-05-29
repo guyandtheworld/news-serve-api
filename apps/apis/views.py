@@ -81,7 +81,7 @@ class GetUserUUID(views.APIView):
             content = {
                 'user': dash_user.uuid,
                 'admin': dash_user.user.is_staff,
-                'name': dash_user.user.first_name+" "+dash_user.user.last_name
+                'name': dash_user.user.first_name + " " + dash_user.user.last_name
             }
             return Response(content,
                             status=status.HTTP_200_OK)
