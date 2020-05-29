@@ -9,17 +9,13 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from apis.models.users import DashUser
-from apis.models.story import EntityScore
 from apis.models.entity import (EntityType,
-                                StoryEntityRef,
-                                StoryEntityMap)
+                                StoryEntityRef)
+
 from entity.models import Alias
 from .serializers import (EntityTypeSerializer,
                           AliasListSerializer,
-                          ParentNameSerializer,
-                          StoryEntityMapSerializer,
-                          EntityScoreSerializer,
-                          AliasChangeSerializer)
+                          ParentNameSerializer)
 
 
 class ViewEntityType(views.APIView):

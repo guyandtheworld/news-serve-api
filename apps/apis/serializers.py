@@ -29,6 +29,7 @@ class ScenarioSerializer(ModelSerializer):
 class ScenarioListSerializer(ModelSerializer):
     scenario_name = serializers.CharField(source='scenarioID.name', read_only=True)
     scenario_mode = serializers.CharField(source='scenarioID.mode', read_only=True)
+
     class Meta:
         model = UserScenario
         fields = ["uuid", "scenarioID", "scenario_name", "scenario_mode"]
@@ -87,9 +88,11 @@ class BucketDetailSerializer(ModelSerializer):
 class ScenarioDetailSerializer(ModelSerializer):
     entity = EntityDetailSerializer(many=True)
     bucket = BucketDetailSerializer(many=True)
+
     class Meta:
         model = Scenario
         fields = ["uuid", "name", "trackingDays", "entity", "bucket"]
+
 
 class AuthCustomTokenSerializer(serializers.Serializer):
     """

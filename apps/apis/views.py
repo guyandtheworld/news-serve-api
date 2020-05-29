@@ -13,7 +13,7 @@ from rest_framework import renderers
 from rest_framework import parsers
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from .models.scenario import (
     Bucket,
@@ -80,7 +80,8 @@ class GetUserUUID(views.APIView):
         if dash_user:
             content = {
                 'user': dash_user.uuid,
-                'admin': dash_user.user.is_staff
+                'admin': dash_user.user.is_staff,
+                'name': dash_user.user.first_name + " " + dash_user.user.last_name
             }
             return Response(content,
                             status=status.HTTP_200_OK)
@@ -313,7 +314,7 @@ class CreateScenario(views.APIView):
     }
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         request.data["status"] = "unverified"
