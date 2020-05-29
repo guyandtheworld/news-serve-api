@@ -9,8 +9,10 @@ from rest_framework.permissions import IsAdminUser
 from apis.models.entity import Entity
 from apis.models.scenario import Scenario
 
-from .serializers import (VerifiableEntitySerializer, EntityUpdateSerializer,
-                          UnverifiedScenarioSerializer)
+from .serializers import (VerifiableEntitySerializer, 
+                          EntityUpdateSerializer,
+                          UnverifiedScenarioSerializer,
+                          ScenarioSerializer)
 
 
 class ListVerifiableEntities(views.APIView):
@@ -136,3 +138,24 @@ class UnverifiedScenarios(views.APIView):
                              "data": serializer.data}, status=status.HTTP_200_OK)
         msg = "all scenarios are verified"
         return Response({"success": False, "data": msg}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AdminScenarioList(views.APIView):
+    """
+    List all scenarios in the database
+
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, format=None):
+        data = Scenario.objects.all()
+        serializer = ScenarioSerializer(data, many=True)
+        if data:
+            return Response(
+                {"success": True, "result": serializer.data},
+                status=status.HTTP_200_OK
+            )
+        return Response({"success": False},
+                        status=status.HTTP_404_NOT_FOUND)

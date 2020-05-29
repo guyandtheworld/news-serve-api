@@ -26,3 +26,9 @@ class UnverifiedScenarioSerializer(ModelSerializer):
     class Meta:
         model = Scenario
         fields = "__all__"
+
+
+class ScenarioSerializer(ModelSerializer):
+    class Meta:
+        model = Scenario
+        fields = "__all__"
