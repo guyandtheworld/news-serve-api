@@ -7,12 +7,11 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAdminUser
 
 from apis.models.entity import Entity
-from apis.models.scenario import Scenario
+from apis.models.scenario import Scenario, Bucket
 
-from .serializers import (VerifiableEntitySerializer,
-                          EntityUpdateSerializer,
-                          UnverifiedScenarioSerializer,
-                          ScenarioSerializer)
+from .serializers import (EntitySerializer,
+                          ScenarioSerializer,
+                          BucketSerializer)
 
 
 class ListVerifiableEntities(views.APIView):
@@ -30,7 +29,7 @@ class ListVerifiableEntities(views.APIView):
 
         if len(entities) > 0:
             # fetch entitities that are not verified
-            serializer = VerifiableEntitySerializer(entities, many=True)
+            serializer = EntitySerializer(entities, many=True)
 
             return Response({"success": True, "length": len(entities),
                              "data": serializer.data}, status=status.HTTP_200_OK)
@@ -81,7 +80,7 @@ class UpdateEntities(views.APIView):
 
         entity = get_object_or_404(Entity, uuid=request.data["entity"])
 
-        serializer = EntityUpdateSerializer(entity, data=request.data,
+        serializer = EntitySerializer(entity, data=request.data,
                                             partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -108,7 +107,7 @@ class VerifyEntity(views.APIView):
 
         entity = get_object_or_404(Entity, uuid=request.data["entity"])
         data = {"entryVerified": True}
-        serializer = EntityUpdateSerializer(entity, data=data,
+        serializer = EntitySerializer(entity, data=data,
                                             partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -133,7 +132,7 @@ class UnverifiedScenarios(views.APIView):
 
         if len(scenarios) > 0:
             # fetch scenarios that are not verified
-            serializer = UnverifiedScenarioSerializer(scenarios, many=True)
+            serializer = ScenarioSerializer(scenarios, many=True)
             return Response({"success": True, "length": len(scenarios),
                              "data": serializer.data}, status=status.HTTP_200_OK)
         msg = "all scenarios are verified"
@@ -159,3 +158,49 @@ class AdminScenarioList(views.APIView):
             )
         return Response({"success": False},
                         status=status.HTTP_404_NOT_FOUND)
+
+
+class UpdateBucket(views.APIView):
+
+    # To make changes to an existing entity from the table
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+
+    def put(self, request):
+        """
+        To update a bucket with new values
+
+        # format
+        {
+        "bucket": "<bucket UUID>",
+        "name": " ",
+        "description": " ",
+        "keywords": [""]
+        }
+        """
+        bucket = get_object_or_404(Bucket, uuid=request.data["bucket"])
+
+        serializer = BucketSerializer(bucket, data=request.data,
+                                            partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": True, "data": serializer.data},
+                            status=status.HTTP_200_OK
+                            )
+    
+    def delete(self, request):
+        """
+        To delete a bucket from the table
+
+        # Format
+
+        {
+            "bucket": "<BUCKET UUID>"
+        }
+        """
+        bucket = get_object_or_404(Bucket, uuid=request.data["bucket"])
+        bucket.delete()
+        msg = "Bucket is deleted"
+        return Response({"success": True, "data": msg},
+                        status=status.HTTP_200_OK
+                        )
