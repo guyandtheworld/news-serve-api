@@ -1,11 +1,13 @@
 from django.contrib import admin
 
 from .models import (
-    StoryWarehouse,
+    PortfolioWarehouse,
+    AutoWarehouse,
     ClusterMap,
     Cluster
 )
 
-admin.site.register(StoryWarehouse)
+admin.site.register(PortfolioWarehouse)
+admin.site.register(AutoWarehouse)
 admin.site.register(ClusterMap)
 admin.site.register(Cluster)

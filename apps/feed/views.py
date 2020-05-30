@@ -112,7 +112,7 @@ class GetPortfolio(GenericGET):
                                     status=status.HTTP_404_NOT_FOUND)
 
             # fetch portfolio
-            stories = user_portfolio(entity_ids, dates, mode)
+            stories = user_portfolio(entity_ids, scenario.uuid, dates, mode)
 
             if len(stories) == 0:
                 message = "no articles found"
@@ -137,6 +137,8 @@ class GetEntity(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         entity = self.getSingleObjectFromPOST(request, "entity", "uuid", Entity)
+        scenario = self.getSingleObjectFromPOST(
+            request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
         mode = self.getMode(request)
         if mode == 'portfolio':
@@ -145,7 +147,7 @@ class GetEntity(GenericGET):
             entity = get_object_or_404(StoryEntityRef, uuid=request.data["entity"])
 
         if entity:
-            stories = user_entity(entity.uuid, dates, mode)
+            stories = user_entity(entity.uuid, scenario.uuid, dates, mode)
 
             if len(stories) == 0:
                 message = "no articles found"

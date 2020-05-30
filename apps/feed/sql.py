@@ -69,7 +69,7 @@ def get_latest_model_uuid(scenario):
     return str(row[0])
 
 
-def user_portfolio(entity_ids, dates, mode):
+def user_portfolio(entity_ids, scenario_id, dates, mode):
     """
     query to filter stories based on the portfolio
     language and published date and then return
@@ -106,8 +106,9 @@ def user_portfolio(entity_ids, dates, mode):
                 where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" in {}
                 and story_body.body is not null
+                and "scenarioID_id" = '{}'
                 and published_date > %s and published_date <= %s
-                """.format(EXTRA_INFO_AUTO, ids_str)
+                """.format(EXTRA_INFO_AUTO, ids_str, scenario_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
@@ -115,7 +116,7 @@ def user_portfolio(entity_ids, dates, mode):
     return rows
 
 
-def user_entity(entity_id, dates, mode):
+def user_entity(entity_id, scenario_id, dates, mode):
     """
     query to filter stories based on the entity
     language and published date and then return
@@ -149,8 +150,9 @@ def user_entity(entity_id, dates, mode):
                 {}
                 where "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and entitymap."entityID_id" = {}
+                and "scenarioID_id" = '{}'
                 and published_date > %s and published_date <= %s
-                """.format(EXTRA_INFO_AUTO, id_str)
+                """.format(EXTRA_INFO_AUTO, id_str, scenario_id)
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
@@ -208,7 +210,8 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and entitymap."entityID_id" in {}
-                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_ids)
+                and "scenarioID_id" = '{}'
+                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_ids, scenario_id)
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
         rows = dictfetchall(cursor)
@@ -266,7 +269,8 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
                 and "language" in ('english', 'US', 'CA', 'AU', 'IE')
                 and published_date > %s and published_date <= %s
                 and entitymap."entityID_id" = {}
-                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_id)
+                and "scenarioID_id" = '{}'
+                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_id, scenario_id)
 
     with connection.cursor() as cursor:
         cursor.execute(query, [start_date, end_date])
