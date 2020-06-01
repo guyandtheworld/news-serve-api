@@ -229,12 +229,4 @@ class GetGlobeData(views.APIView):
 
     def get(self, request):
         data = get_count_per_country()
-        df = {}
-        for country in data:
-            try:
-                df[countries.search_fuzzy(country[0])[0].alpha_3] = {
-                    'storycount': country[1]}
-            except:
-                pass
-
-        return Response({"success": True, "data": df})
+        return Response({"success": True, "data": data})
