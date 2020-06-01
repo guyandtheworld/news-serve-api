@@ -11,7 +11,7 @@ gunicorn==20.0.4
 pandas==1.0.1
 pathspec==0.7.0
 psycopg2==2.8.4
-pycountry==19.8.18
+hdx-python-country
 pytz==2019.3
 regex==2020.1.8
 SPARQLWrapper==1.8.5

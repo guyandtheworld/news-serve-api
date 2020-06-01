@@ -20,7 +20,7 @@ from .sql import (news_count_query,
                   get_entity_stories,
                   get_count_per_country)
 
-from pycountry import countries
+from hdx.location.country import Country
 
 
 class GenericGET(views.APIView):
@@ -202,7 +202,11 @@ class SentimentViz(GenericGET):
             bucket = get_object_or_404(Bucket,
                                        uuid=request.data["bucket_uuid"])
             data = sentiment_query(
-                "bucket", bucket.uuid, request.data["sentiment_type"], dates, bucket.scenarioID.uuid)
+                "bucket",
+                bucket.uuid,
+                request.data["sentiment_type"],
+                dates,
+                bucket.scenarioID.uuid)
 
         else:
             msg = "no viz for this type"
@@ -229,4 +233,11 @@ class GetGlobeData(views.APIView):
 
     def get(self, request):
         data = get_count_per_country()
-        return Response({"success": True, "data": data})
+        df = pd.DataFrame(data, columns=['source_country', 'storycount'])
+        df = df[df['source_country'] != '']
+        df = df[df['source_country'] != 'U']
+        df = df[df['source_country'] != 'GH']
+        df['alpha_3']=df.source_country.map\
+        (Country.get_iso3_country_code_fuzzy).map(lambda x: x[0])
+        output = df.groupby('alpha_3').sum().to_dict('index')
+        return Response({"success": True, "data": output})

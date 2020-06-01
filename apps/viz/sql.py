@@ -1,6 +1,5 @@
 from django.db import connection
 
-
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     return [
@@ -194,11 +193,15 @@ def get_entity_stories(dates, entity_id, mode):
     return rows
 
 
+
+
+
 def get_count_per_country():
-    query = """select source_country,count(title) from apis_story
+    query = """select source_country,count(uuid) from apis_story
     group by source_country
     """
     with connection.cursor() as cursor:
         cursor.execute(query)
         rows = cursor.fetchall()
+
     return rows
