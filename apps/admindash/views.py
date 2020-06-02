@@ -18,14 +18,20 @@ class ListVerifiableEntities(views.APIView):
     """
     List all entities that are not verfied by the user
 
+    # Format
+
+        {
+            "scenario": "<SCENARIO UUID>"
+        }
     """
 
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAdminUser]
 
-    def get(self, request):
+    def post(self, request):
 
-        entities = Entity.objects.filter(entryVerified=False)
+        scenario = get_object_or_404(Scenario, uuid=request.data["scenario"])
+        entities = Entity.objects.filter(scenarioID=scenario, entryVerified=False)
 
         if len(entities) > 0:
             # fetch entitities that are not verified
@@ -96,7 +102,8 @@ class VerifyEntity(views.APIView):
     # Format
 
     {
-        "entity": "<ENTITY UUID>"
+        "entity": "<ENTITY UUID>",
+        "set_flag": True(To verify entity)/False(to unverify entity)
     }
     """
 
@@ -106,15 +113,28 @@ class VerifyEntity(views.APIView):
     def put(self, request):
 
         entity = get_object_or_404(Entity, uuid=request.data["entity"])
-        data = {"entryVerified": True}
-        serializer = EntitySerializer(entity, data=data,
-                                            partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"success": True,
-                             "entryVerified": serializer.data["entryVerified"]},
-                            status=status.HTTP_200_OK
-                            )
+        flag = request.data["set_flag"]
+
+        if flag == True:
+            data = {"entryVerified": True}
+            serializer = EntitySerializer(entity, data=data,
+                                          partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"success": True,
+                                "entryVerified": serializer.data["entryVerified"]},
+                                status=status.HTTP_200_OK
+                                )
+        else:
+            data = {"entryVerified": False}
+            serializer = EntitySerializer(entity, data=data,
+                                          partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"success": True,
+                                "entryVerified": serializer.data["entryVerified"]},
+                                status=status.HTTP_200_OK
+                                )
 
 
 class UnverifiedScenarios(views.APIView):
