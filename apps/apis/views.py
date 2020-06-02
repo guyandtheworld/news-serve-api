@@ -481,19 +481,11 @@ class ListScenarioDetails(views.APIView):
 
     def post(self, request):
 
-        user = DashUser.objects.get(uuid=request.data["uuid"])
-        user_scenarios = UserScenario.objects.filter(userID=user)
-
-        if len(user_scenarios) > 0:
+        scenario = get_object_or_404(Scenario, uuid=request.data["uuid"])
+        if scenario:
             # fetch scenarios details of the user
-            scenario_list = []
-            for user_scenario in user_scenarios:
-                scenario = Scenario.objects.get(uuid=user_scenario.scenarioID.uuid)
-                scenario_list.append(scenario)
-
-            serializer = ScenarioDetailSerializer(scenario_list, many=True)
-
-            return Response({"success": True, "length": len(user_scenarios),
+            serializer = ScenarioDetailSerializer(scenario)
+            return Response({"success": True,
                              "data": serializer.data},
                             status=status.HTTP_200_OK)
         return Response({"success": False},
