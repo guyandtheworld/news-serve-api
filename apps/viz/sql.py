@@ -1,5 +1,6 @@
 from django.db import connection
 
+
 def dictfetchall(cursor):
     "Return all rows from a cursor as a dict"
     return [
@@ -68,7 +69,13 @@ def news_count_query(viz_type, uuid, dates, scenario_id=None, mode=None):
     return rows
 
 
-def sentiment_query(viz_type, uuid, sentiment_type, dates, scenario_id=None, mode=None):
+def sentiment_query(
+        viz_type,
+        uuid,
+        sentiment_type,
+        dates,
+        scenario_id=None,
+        mode=None):
     """
     query to fetch the sentiment per day of
     * an entity
@@ -193,13 +200,20 @@ def get_entity_stories(dates, entity_id, mode):
     return rows
 
 
-
-
-
-def get_count_per_country():
-    query = """select source_country,count(uuid) from apis_story
-    group by source_country
-    """
+def get_count_per_country(scenario, dates):
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
+    if scenario == 'none':
+        query = """select source_country,count(uuid) from apis_story
+        where published_date > {} and published_date <= {}
+        group by source_country
+        """.format(start_date, end_date)
+    else:
+        query = """select source_country,count(uuid) from apis_story
+        where published_date > {} and published_date <= {}
+        and "scenarioID_id" = '{}'
+        group by source_country
+        """.format(start_date, end_date, scenario)
     with connection.cursor() as cursor:
         cursor.execute(query)
         rows = cursor.fetchall()

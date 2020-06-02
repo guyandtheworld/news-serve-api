@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from datetime import datetime, timedelta
 
 from django.shortcuts import get_object_or_404
 from rest_framework.authentication import TokenAuthentication
@@ -232,12 +233,28 @@ class GetGlobeData(views.APIView):
     """
 
     def get(self, request):
-        data = get_count_per_country()
+        try:
+            delta = timedelta(days=int(request.data['timedelta']))
+            end = datetime.now()
+            start = end - delta
+            dates = (start, end)
+        except BaseException:
+            delta = timedelta(days=7)
+            end = datetime.now()
+            start = end - delta
+            dates = (start, end)
+        try:
+            scenario = request.data["scenario"]
+
+        except BaseException:
+            scenario = 'none'
+        data = get_count_per_country(scenario, dates)
         df = pd.DataFrame(data, columns=['source_country', 'storycount'])
         df = df[df['source_country'] != '']
         df = df[df['source_country'] != 'U']
         df = df[df['source_country'] != 'GH']
-        df['alpha_3']=df.source_country.map\
-        (Country.get_iso3_country_code_fuzzy).map(lambda x: x[0])
+        df['alpha_3'] = df.source_country.map(
+            Country.get_iso3_country_code_fuzzy).map(
+            lambda x: x[0])
         output = df.groupby('alpha_3').sum().to_dict('index')
         return Response({"success": True, "data": output})
