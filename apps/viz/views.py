@@ -243,18 +243,22 @@ class GetGlobeData(views.APIView):
             end = datetime.now()
             start = end - delta
             dates = (start, end)
+
         try:
             scenario = request.data["scenario"]
-
         except BaseException:
             scenario = 'none'
+
         data = get_count_per_country(scenario, dates)
+
         df = pd.DataFrame(data, columns=['source_country', 'storycount'])
         df = df[df['source_country'] != '']
         df = df[df['source_country'] != 'U']
         df = df[df['source_country'] != 'GH']
+
         df['alpha_3'] = df.source_country.map(
             Country.get_iso3_country_code_fuzzy).map(
             lambda x: x[0])
+
         output = df.groupby('alpha_3').sum().to_dict('index')
         return Response({"success": True, "data": output})
