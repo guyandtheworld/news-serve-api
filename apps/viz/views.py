@@ -232,7 +232,6 @@ class GetGlobeData(views.APIView):
     return data for the landing page globe, take in a date range
     """
 
-
     def post(self, request):
         try:
             delta = timedelta(days=int(request.data['timedelta']))
@@ -240,7 +239,7 @@ class GetGlobeData(views.APIView):
             start = end - delta
             dates = (start, end)
         except BaseException:
-            delta = timedelta(days=7)
+            delta = timedelta(days=365)
             end = datetime.now()
             start = end - delta
             dates = (start, end)
