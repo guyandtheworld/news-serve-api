@@ -224,3 +224,30 @@ class UpdateBucket(views.APIView):
         return Response({"success": True, "data": msg},
                         status=status.HTTP_200_OK
                         )
+
+
+class ChangeScenarioStatus(views.APIView):
+    """
+    Change scenario status to active/demo
+
+    # Format
+
+    {
+        "scenario": "<SCENARIO UUID>",
+        "status": "active/demo"
+    }
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAdminUser]
+
+    def put(self, request):
+
+        scenario = get_object_or_404(Scenario, uuid=request.data["scenario"])
+
+        serializer = ScenarioSerializer(scenario, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"success": True, "data": serializer.data},
+                            status=status.HTTP_200_OK
+                            )
