@@ -238,6 +238,26 @@ class AddEntity(views.APIView):
         return Response({"success": False, "data": msg},
                         status=status.HTTP_404_NOT_FOUND)
 
+    def delete(self, request):
+
+        try:
+            entity = request.data["entity"]
+        except BaseException:
+            msg = "no entity in request"
+            return Response({"success": False, "data": msg},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        entity = get_object_or_404(Entity,
+                                   uuid=entity)
+
+        message = entity.name
+        entity.delete()
+
+        return Response(
+            {"success": True, "entity": message},
+            status=status.HTTP_201_CREATED
+        )
+
 
 class EntityRef(views.APIView):
     """
