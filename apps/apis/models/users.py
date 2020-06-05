@@ -6,6 +6,8 @@ from django.utils import timezone
 
 
 STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"), ("unverified", "Unverified"))
+ROLES = (("alrt-admin", "Alrt Admin"), ("alrt-sme", "Alrt SME"), ("alrt-qa", "Alrt QA"),
+         ("demo-user", "Demo User"), ("client-admin", "Client Admin"), ("client-user", "Client User"))
 
 
 class Client(models.Model):
@@ -22,6 +24,7 @@ class DashUser(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
     status = models.CharField(max_length=10, choices=STATUSES)
+    role = models.CharField(max_length=25, choices=ROLES)
     clientID = models.ForeignKey("Client", on_delete=models.CASCADE)
     defaultScenario = models.ForeignKey("Scenario", on_delete=models.CASCADE)
     setupDate = models.DateField(default=timezone.now)

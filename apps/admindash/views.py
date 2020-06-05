@@ -87,7 +87,7 @@ class UpdateEntities(views.APIView):
         entity = get_object_or_404(Entity, uuid=request.data["entity"])
 
         serializer = EntitySerializer(entity, data=request.data,
-                                            partial=True)
+                                      partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"success": True, "data": serializer.data},
@@ -115,7 +115,7 @@ class VerifyEntity(views.APIView):
         entity = get_object_or_404(Entity, uuid=request.data["entity"])
         flag = request.data["set_flag"]
 
-        if flag == True:
+        if flag:
             data = {"entryVerified": True}
             serializer = EntitySerializer(entity, data=data,
                                           partial=True)
@@ -201,13 +201,13 @@ class UpdateBucket(views.APIView):
         bucket = get_object_or_404(Bucket, uuid=request.data["bucket"])
 
         serializer = BucketSerializer(bucket, data=request.data,
-                                            partial=True)
+                                      partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"success": True, "data": serializer.data},
                             status=status.HTTP_200_OK
                             )
-    
+
     def delete(self, request):
         """
         To delete a bucket from the table

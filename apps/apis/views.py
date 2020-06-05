@@ -80,6 +80,7 @@ class GetUserUUID(views.APIView):
         if dash_user:
             content = {
                 'user': dash_user.uuid,
+                'role': dash_user.role,
                 'admin': dash_user.user.is_staff,
                 'name': dash_user.user.first_name + " " + dash_user.user.last_name
             }
@@ -125,6 +126,7 @@ class SignUp(CreateAPIView):
             dash_user_obj = DashUser.objects.create(
                 user=user_obj,
                 status=dash_user_form.data['status'],
+                role=dash_user_form.data['role'],
                 clientID=client,
                 defaultScenario=scenario
             )
