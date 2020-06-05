@@ -62,7 +62,7 @@ class UserSerializer(ModelSerializer):
 class DashUserSerializer(ModelSerializer):
     class Meta:
         model = DashUser
-        fields = ["status", "clientID", "defaultScenario"]
+        fields = ["status", "role", "clientID", "defaultScenario"]
 
 
 class KeywordSerializer(ModelSerializer):
