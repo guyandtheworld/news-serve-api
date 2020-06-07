@@ -48,7 +48,7 @@ class UpdateEntities(views.APIView):
 
     # To make changes to an existing entity from the table
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAlrtAdmin, IsAlrtSME]
+    permission_classes = [IsAlrtAdmin|IsAlrtSME]
 
     def delete(self, request):
         """
@@ -164,7 +164,7 @@ class UpdateBucket(views.APIView):
 
     # To make changes to an existing entity from the table
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAlrtSME, IsAlrtAdmin]
+    permission_classes = [IsAlrtSME|IsAlrtAdmin]
 
     def put(self, request):
         """
