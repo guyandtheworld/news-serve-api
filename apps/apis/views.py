@@ -13,7 +13,7 @@ from rest_framework import renderers
 from rest_framework import parsers
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from .models.scenario import (
     Bucket,
@@ -23,6 +23,7 @@ from .models.scenario import (
 
 from settings.common import EMAIL_HOST_USER
 
+from .permissions import IsAlrtAdmin, IsAlrtSME, IsAlrtClientAdmin
 from .models.users import DashUser, Client, UserScenario
 from .serializers import (UserSerializer, DashUserSerializer,
                           AuthCustomTokenSerializer, ScenarioSerializer,
@@ -316,7 +317,7 @@ class CreateScenario(views.APIView):
     }
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin]
 
     def post(self, request):
         request.data["status"] = "unverified"
@@ -372,7 +373,7 @@ class AddBuckets(views.APIView):
     }]
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAlrtAdmin, IsAlrtSME, IsAlrtClientAdmin]
 
     def post(self, request):
         serializer = BucketSerializer(data=request.data, many=True)
