@@ -6,9 +6,11 @@ from django.utils import timezone
 
 
 STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"), ("unverified", "Unverified"))
+
 ROLES = (("alrt-admin", "Alrt Admin"), ("alrt-sme", "Alrt SME"), ("alrt-qa", "Alrt QA"),
          ("demo-user", "Demo User"), ("client-admin", "Client Admin"), ("client-user", "Client User"))
 
+ACCESS = (("view", "View"), ("edit", "Edit"))
 
 class Client(models.Model):
     uuid = models.UUIDField(
@@ -36,6 +38,7 @@ class DashUser(models.Model):
 class UserScenario(models.Model):
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4,
                             editable=False)
+    access = models.CharField(max_length=10, choices=ACCESS)
     userID = models.ForeignKey("DashUser", on_delete=models.CASCADE)
     scenarioID = models.ForeignKey("Scenario", on_delete=models.CASCADE)
 
