@@ -4,8 +4,8 @@ from rest_framework import views
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAdminUser
-from apps.apis.permissions import IsAlrtAdmin
+from apps.apis.permissions import (IsAlrtAdmin, 
+                                   IsAlrtSME)
 
 from apis.models.entity import Entity
 from apis.models.scenario import Scenario, Bucket
@@ -27,7 +27,7 @@ class ListVerifiableEntities(views.APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin]
 
     def post(self, request):
 
@@ -48,7 +48,7 @@ class UpdateEntities(views.APIView):
 
     # To make changes to an existing entity from the table
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin, IsAlrtSME]
 
     def delete(self, request):
         """
@@ -109,7 +109,7 @@ class VerifyEntity(views.APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin]
 
     def put(self, request):
 
@@ -145,7 +145,7 @@ class UnverifiedScenarios(views.APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin]
 
     def get(self, request):
 
@@ -164,7 +164,7 @@ class UpdateBucket(views.APIView):
 
     # To make changes to an existing entity from the table
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin, IsAlrtSME]
 
     def put(self, request):
         """
@@ -219,7 +219,7 @@ class ChangeScenarioStatus(views.APIView):
     """
 
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAlrtAdmin]
 
     def put(self, request):
 
