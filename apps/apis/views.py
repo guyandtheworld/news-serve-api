@@ -373,7 +373,7 @@ class AddBuckets(views.APIView):
     }]
     """
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAlrtAdmin, IsAlrtSME, IsAlrtClientAdmin]
+    permission_classes = [IsAlrtAdmin|IsAlrtSME|IsAlrtClientAdmin]
 
     def post(self, request):
         serializer = BucketSerializer(data=request.data, many=True)
