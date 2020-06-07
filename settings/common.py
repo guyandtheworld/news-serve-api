@@ -125,12 +125,13 @@ STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 STATIC_URL = '/static/'
 
 CORS_ORIGIN_WHITELIST = [
-    "https://alrt.herokuapp.com",
     "http://dash.alrt.ai",
     "https://dash.alrt.ai",
     "https://landing-bhkat7prtq-de.a.run.app",
     "http://localhost:3000",
-    "https://admin-dash-bhkat7prtq-de.a.run.app"
+    "https://admin-dash-bhkat7prtq-de.a.run.app",
+    "http://admin.alrt.ai",
+    "https://admin.alrt.ai"
 ]
 
 
