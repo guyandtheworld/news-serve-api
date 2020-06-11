@@ -4,15 +4,17 @@ from rest_framework import views
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
-from apps.apis.permissions import (IsAlrtAdmin, 
+from apps.apis.permissions import (IsAlrtAdmin,
                                    IsAlrtSME)
 
 from apis.models.entity import Entity
 from apis.models.scenario import Scenario, Bucket
+from apis.models.users import Client, DashUser
 
 from .serializers import (EntitySerializer,
                           ScenarioSerializer,
-                          BucketSerializer)
+                          BucketSerializer,
+                          DashUserSerializer)
 
 
 class ListVerifiableEntities(views.APIView):
@@ -231,3 +233,32 @@ class ChangeScenarioStatus(views.APIView):
             return Response({"success": True, "data": serializer.data},
                             status=status.HTTP_200_OK
                             )
+
+
+class ListClientUsers(views.APIView):
+    """
+    List all the users under a client
+
+    # Format
+
+    {
+        "client": "<CLIENT UUID>",
+    }
+    """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAlrtAdmin]
+
+    def post(self, request):
+
+        client = get_object_or_404(Client, uuid=request.data["client"])
+        users = DashUser.objects.filter(clientID=client)
+
+        if len(users) > 0:
+            # fetch entitities that are not verified
+            serializer = DashUserSerializer(users, many=True)
+
+            return Response({"success": True, "length": len(users),
+                             "data": serializer.data}, status=status.HTTP_200_OK)
+        msg = "No users under the client"
+        return Response({"success": False, "data": msg}, status=status.HTTP_404_NOT_FOUND)
