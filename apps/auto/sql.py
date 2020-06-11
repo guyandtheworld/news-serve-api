@@ -32,7 +32,8 @@ def get_scenario_entity_count(scenario_id, type_id, n_entities, dates):
     as entmap
     inner join
     (select uuid as type_id from apis_storyentityref as sef
-    where render=True {} and wikipedia != '') as type
+    where render=True {} and wikipedia != ''
+    and "typeID_id" != 'd5ae7aea-b96a-43c2-a680-e3ff0e7c81ec') as type
     on entmap."entityID_id" = type.type_id
     inner join
     (select uuid as story_id, published_date from apis_story as story
