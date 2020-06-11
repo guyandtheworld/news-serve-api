@@ -12,6 +12,7 @@ ROLES = (("alrt-admin", "Alrt Admin"), ("alrt-sme", "Alrt SME"), ("alrt-qa", "Al
 
 ACCESS = (("view", "View"), ("edit", "Edit"))
 
+
 class Client(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)

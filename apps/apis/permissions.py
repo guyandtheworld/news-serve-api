@@ -1,7 +1,7 @@
-from django.contrib.auth.models import User
 
 from rest_framework.permissions import BasePermission
 from apis.models.users import DashUser
+
 
 class IsAlrtAdmin(BasePermission):
     """
@@ -11,7 +11,7 @@ class IsAlrtAdmin(BasePermission):
 
     def has_permission(self, request, view):
         dash_user = DashUser.objects.get(user=request.user)
-        
+
         if dash_user.user.is_staff and dash_user.role == "alrt-admin":
             return True
         else:
@@ -26,7 +26,7 @@ class IsAlrtSME(BasePermission):
 
     def has_permission(self, request, view):
         dash_user = DashUser.objects.get(user=request.user)
-        
+
         return dash_user.role == "alrt-sme"
 
 
@@ -38,7 +38,7 @@ class IsAlrtTester(BasePermission):
 
     def has_permission(self, request, view):
         dash_user = DashUser.objects.get(user=request.user)
-        
+
         return dash_user.role == "alrt-qa"
 
 
@@ -49,7 +49,7 @@ class IsAlrtDemoUser(BasePermission):
 
     def has_permission(self, request, view):
         dash_user = DashUser.objects.get(user=request.user)
-        
+
         return dash_user.role == "demo-user"
 
 
@@ -60,7 +60,7 @@ class IsAlrtClientAdmin(BasePermission):
 
     def has_permission(self, request, view):
         dash_user = DashUser.objects.get(user=request.user)
-        
+
         return dash_user.role == "client-admin"
 
 
@@ -71,5 +71,5 @@ class IsAlrtClientUser(BasePermission):
 
     def has_permission(self, request, view):
         dash_user = DashUser.objects.get(user=request.user)
-        
+
         return dash_user.role == "client-user"
