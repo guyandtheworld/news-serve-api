@@ -131,7 +131,9 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
     "https://admin-dash-bhkat7prtq-de.a.run.app",
     "http://admin.alrt.ai",
-    "https://admin.alrt.ai"
+    "https://admin.alrt.ai",
+    "https://www.alrt.ai",
+    "https://alrt.ai"
 ]
 
 
