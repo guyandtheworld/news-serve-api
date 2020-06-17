@@ -1,23 +1,26 @@
 import math
 import pandas as pd
+import re
 
 from datetime import datetime
 from .sql import story_entities
 
 
-KEYWORD_SCORE = 30
+KEYWORD_SCORE = 20
 
 
-def similarity(str1, str2):
-    if str1 in str2:
-        return KEYWORD_SCORE
-    else:
-        return 0
+def similarity(keyword, text):
+    """
+    Generates score based on the number of times keywords
+    appear on the text body
+    """
+    count = sum(1 for _ in re.finditer(r'\b%s\b' % re.escape(keyword), text))
+    return count * KEYWORD_SCORE
 
 
 def presence_score(keyword, text, analytics_type):
     """
-    gives score to the article based on the presence of
+    Gives score to the article based on the presence of
     relevant keyword in the content and the body
     """
     score = similarity(keyword, text)
@@ -33,7 +36,10 @@ def hotness(article, bucket, sentiment, mode):
     adding to score if the company term is in title
     * domain score - domain reliability
     """
-    s = article["title_sentiment"]["compound"]
+    title_sentiment = article["title_sentiment"]["compound"]
+    body_sentiment = article["body_sentiment"]["compound"]
+
+    s = (title_sentiment + body_sentiment) / 2
 
     if mode == "portfolio":
         keyword = article["search_keyword"]
@@ -42,7 +48,7 @@ def hotness(article, bucket, sentiment, mode):
 
     if sentiment:
         # negative news
-        s = -s * 100
+        s = -s * 30 + 30
 
     # presence of keyword in title
     s += presence_score(keyword.lower(), article["title"].lower(), "title")
@@ -52,19 +58,9 @@ def hotness(article, bucket, sentiment, mode):
 
     if bucket:
         # bucket score + source score
-        s += (article["grossScore"] * 100)
-        s += (article["sourceScore"] * 100)
+        s += (article["grossScore"] * 50)
 
     baseScore = math.log(max(s, 1))
-
-    timeDiff = (datetime.now() - article["published_date"]).days
-
-    # number of months
-    timeDiff = timeDiff // 30
-
-    if (timeDiff >= 1):
-        x = timeDiff - 1
-        baseScore = baseScore * math.exp(-.2 * x * x)
 
     return round(baseScore, 3)
 
@@ -89,6 +85,8 @@ def score_in_bulk(articles, bucket=False, sentiment=True, mode="portfolio"):
     result_sample['uuid'] = result_sample['uuid'].apply(str)
     result_sample['entityID_id'] = result_sample['entityID_id'].apply(str)
     result_sample = result_sample.fillna(False)
+    result_sample["body"] = result_sample["body"].str[:400]
+
     return result_sample.to_dict(orient='records')
 
 
