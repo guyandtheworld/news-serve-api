@@ -35,6 +35,7 @@ class Dump(models.Model):
     render = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     storyID = models.ForeignKey("apis.Story", on_delete=models.CASCADE)
+    scenarioID = models.ForeignKey("apis.Scenario", on_delete=models.CASCADE)
     published_date = models.DateTimeField()
     salience = models.FloatField(null=True)
     mentions = models.IntegerField(null=True)
