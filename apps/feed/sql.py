@@ -116,7 +116,7 @@ def user_portfolio(entity_ids, scenario_id, dates, mode):
     return rows
 
 
-def user_entity(entity_id, scenario_id, dates, mode):
+def user_entity(entity_id, scenario_id, dates, mode, search_keyword=None):
     """
     query to filter stories based on the entity
     language and published date and then return
@@ -127,7 +127,20 @@ def user_entity(entity_id, scenario_id, dates, mode):
     id_str = "'{}'".format(entity_id)
     start_date = "'{}'".format(dates[0])
     end_date = "'{}'".format(dates[1])
-    if mode == 'portfolio':
+    keyword = "'{}'".format(search_keyword)
+    if mode == 'keyword':
+        query = """
+                select unique_hash, story.uuid, title, story.url, search_keyword,
+                published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
+                title_sentiment.sentiment as title_sentiment,
+                body_sentiment.sentiment as body_sentiment, "cluster"
+                FROM public.apis_story as story
+                {}
+                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
+                and "search_keyword" = {}
+                and published_date > %s and published_date <= %s
+                """.format(EXTRA_INFO_PORT, keyword)
+    elif mode == 'portfolio':
         query = """
                 select unique_hash, story.uuid, title, story.url, search_keyword,
                 published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,

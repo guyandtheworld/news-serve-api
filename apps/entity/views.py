@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
+from django.db import connection
 
 from rest_framework import status
 from rest_framework import views
@@ -380,3 +381,45 @@ class ManageEntity(GenericGET):
                          "samples": len(scores),
                          "data": scores},
                         status=status.HTTP_200_OK)
+
+
+class EntityKeywords(views.APIView):
+    """
+    List keywords under an entity
+
+    # Format
+    {
+        "entity": "<ENTITY UUID"
+    }
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        entity = get_object_or_404(Entity, uuid=request.data["entity"])
+
+        serializer = EntityListSerializer(entity)
+        keywords = serializer.data["keywords"]
+
+        if len(keywords) > 0:
+            keyword_str = "', '".join(keywords)
+            keyword_str = "('{}')".format(keyword_str)
+
+            query = """
+                        select search_keyword, count(*) from apis_story
+                        where search_keyword in {}
+                        group by search_keyword
+                    """.format(keyword_str)
+
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                columns = [col[0] for col in cursor.description]
+                rows = [
+                    dict(zip(columns, row))
+                    for row in cursor.fetchall()
+                ]
+                return Response({"success": True,
+                                "data": rows},
+                                status=status.HTTP_200_OK)
+        return Response({"success": False, "message": "No keywords found"},
+                        status=status.HTTP_404_NOT_FOUND)

@@ -141,13 +141,19 @@ class GetEntity(GenericGET):
             request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
         mode = self.getMode(request)
-        if mode == 'portfolio':
+
+        if mode == 'keyword':
+            search_keyword = request.data['search_keyword']
+            if search_keyword not in entity.keywords:
+                message = "keyword doesn't exist"
+                return Response({"success": False, "message": message})
+        elif mode == 'portfolio':
             entity = get_object_or_404(Entity, uuid=request.data["entity"])
         else:
             entity = get_object_or_404(StoryEntityRef, uuid=request.data["entity"])
 
         if entity:
-            stories = user_entity(entity.uuid, scenario.uuid, dates, mode)
+            stories = user_entity(entity.uuid, scenario.uuid, dates, mode, search_keyword)
 
             if len(stories) == 0:
                 message = "no articles found"
