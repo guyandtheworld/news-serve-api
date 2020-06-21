@@ -58,8 +58,6 @@ class Custom(models.Model):
     scenarioID = models.ForeignKey("apis.Scenario", on_delete=models.CASCADE)
     wikipedia = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    salience = models.FloatField(null=True)
-    mentions = models.IntegerField(null=True)
     updated_by = models.ForeignKey("apis.DashUser", null=True, on_delete=models.SET_NULL)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
