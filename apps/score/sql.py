@@ -46,10 +46,8 @@ def portfolio_score(entity_ids, scenario_id, dates):
         return ()
 
     query = """
-            select entity_score."entityID_id"::text, entity."name", entity.wikipedia,
-            "bucketID_id"::text, "grossScore", entity_type."name" as "type",
-            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            select entity_score."entityID_id" as "uuid", entity."name",
+            round((sum("grossScore")/count("grossScore") * 100)::numeric, 2)::float as gross_entity_score from
             apis_entityscore entity_score inner join apis_story story on entity_score."storyID_id" = story.uuid
             inner join apis_bucket bucket on entity_score."bucketID_id" = bucket.uuid
             inner join apis_storyentityref entity on entity_score."entityID_id" = entity.uuid
@@ -57,6 +55,7 @@ def portfolio_score(entity_ids, scenario_id, dates):
             where entity_score."entityID_id" in {} and model_label != 'other'
             and entity.render = True
             and "modelID_id" = {} and published_date > %s and published_date <= %s
+            group by entity_score."entityID_id", entity."name"
             """.format(entity_ids, model_id)
 
     with connection.cursor() as cursor:
@@ -82,9 +81,8 @@ def bucket_score(bucket_ids, scenario_id, dates):
         return ()
 
     query = """
-            select bckt."name", "bucketID_id"::text, "grossScore",
-            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            select bckt."name", "bucketID_id" as uuid,
+            round((sum("grossScore")/count("grossScore") * 100)::numeric, 2)::float as score from
             apis_bucketscore ae
             inner join apis_story sty
             on ae."storyID_id" = sty.uuid
@@ -93,6 +91,7 @@ def bucket_score(bucket_ids, scenario_id, dates):
             where "bucketID_id" in {}
             and "modelID_id" = {}
             and published_date > %s and published_date <= %s
+            group by bckt."name", "bucketID_id"
             """.format(bucket_ids, model_id)
 
     with connection.cursor() as cursor:
@@ -114,9 +113,8 @@ def entity_bucket_score(entity_id, scenario_id, dates):
         return ()
 
     query = """
-            select bckt."name", "bucketID_id"::text, "grossScore",
-            extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-            extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+            select bckt."name", "bucketID_id"::text as uuid,
+            round((sum("grossScore")/count("grossScore") * 100)::numeric, 2)::float as score from
             apis_entityscore ae
             inner join apis_story sty
             on ae."storyID_id" = sty.uuid
@@ -126,6 +124,7 @@ def entity_bucket_score(entity_id, scenario_id, dates):
             and "modelID_id" = {}
             and model_label != 'other'
             and published_date > %s and published_date <= %s
+            group by bckt."name", "bucketID_id"
             """.format(model_id)
 
     with connection.cursor() as cursor:
@@ -186,31 +185,31 @@ def portfolio_sentiment(entity_ids, dates, mode):
 
     if mode == "portfolio":
         query = """
-                select entty."name", "entityID_id", sentiment->'compound' as "sentiment",
-                extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-                extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
+                select entity."name", "entityID_id" as uuid,
+                round((sum((sentiment->'compound')::float)/count(sentiment->'compound') * 100)::numeric, 2)::float as sentiment from
                 apis_storysentiment as2
                 inner join apis_story sty
                 on as2."storyID_id" = sty.uuid
-                inner join apis_storyentityref entty
-                on "entityID_id" = entty.uuid
-                where entty.uuid in {}
+                inner join apis_storyentityref entity
+                on "entityID_id" = entity.uuid
+                where entity.uuid in {}
                 and published_date > %s and published_date <= %s
+                group by entity."name", "entityID_id"
                 """.format(entity_ids)
     else:
         query = """
-                select as3."name", as2."entityID_id", sentiment->'compound' as "sentiment",
-                extract(year from age(CURRENT_TIMESTAMP, published_date)) * 12 +
-                extract(month from age(CURRENT_TIMESTAMP, published_date)) as "timeDiff" from
-                apis_storyentitymap as2
+                select entityref."name", entitymap."entityID_id" as uuid,
+                round((sum((sentiment->'compound')::float)/count(sentiment->'compound') * 100)::numeric, 2)::float as sentiment from
+                apis_storyentitymap entitymap
                 inner join apis_story sty
-                on as2."storyID_id" = sty.uuid
-                inner join apis_storyentityref as3
-                on as2."entityID_id" = as3.uuid
+                on entitymap."storyID_id" = sty.uuid
+                inner join apis_storyentityref entityref
+                on entitymap."entityID_id" = entityref.uuid
                 inner join apis_storysentiment stysent
                 on stysent."storyID_id" = sty.uuid
-                where as2."entityID_id" in {} and as3.render = True
+                where entitymap."entityID_id" in {} and entityref.render = True
                 and published_date > %s and published_date <= %s
+                group by entityref."name", entitymap."entityID_id"
                 """.format(entity_ids)
 
     with connection.cursor() as cursor:

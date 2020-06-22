@@ -15,9 +15,6 @@ from auto.utils import get_scenario_entity_count
 from .sql import (portfolio_score, bucket_score,
                   entity_bucket_score, portfolio_sentiment,
                   portfolio_count)
-from .utils import (get_gross_entity_score,
-                    get_gross_bucket_scores,
-                    get_gross_sentiment_scores)
 from apis.utils import extract_timeperiod
 
 
@@ -146,9 +143,10 @@ class GetPortfolioScore(GenericGET):
                                     status=status.HTTP_404_NOT_FOUND)
 
             entity_scores = portfolio_score(entity_ids, scenario.uuid, dates)
+
             scores = self.getScores(entity_scores, portfolio, entity_ids,
                                     metric="gross_entity_score",
-                                    func=get_gross_entity_score)
+                                    func=lambda x: x)
 
             return Response({"success": True,
                              "samples": len(scores),
@@ -205,7 +203,7 @@ class GetSentiment(GenericGET):
 
             scores = self.getScores(entity_scores, portfolio, entity_ids,
                                     metric="sentiment",
-                                    func=get_gross_sentiment_scores)
+                                    func=lambda x: x)
 
             return Response({"success": True,
                              "samples": len(scores),
@@ -312,11 +310,9 @@ class GetBucketScore(GenericGET):
                                  "data": scores},
                                 status=status.HTTP_200_OK)
 
-            scores = get_gross_bucket_scores(bucket_scores)
-
             return Response({"success": True,
-                             "samples": len(scores),
-                             "data": scores},
+                             "samples": len(bucket_scores),
+                             "data": bucket_scores},
                             status=status.HTTP_200_OK)
 
         message = "user or scenario doesn't exist"
@@ -364,11 +360,10 @@ class GetEntityBucketScore(GenericGET):
                                  "data": scores},
                                 status=status.HTTP_200_OK)
 
-            scores = get_gross_bucket_scores(entity_scores)
 
             return Response({"success": True,
-                             "samples": len(scores),
-                             "data": scores},
+                             "samples": len(entity_scores),
+                             "data": entity_scores},
                             status=status.HTTP_200_OK)
 
         message = "user or scenario or entity doesn't exist"
