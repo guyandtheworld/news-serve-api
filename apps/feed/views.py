@@ -141,6 +141,7 @@ class GetEntity(GenericGET):
             request, "scenario", "uuid", Scenario)
         dates = extract_timeperiod(request)
         mode = self.getMode(request)
+        search_keyword = None
 
         if mode == 'keyword':
             search_keyword = request.data['search_keyword']
