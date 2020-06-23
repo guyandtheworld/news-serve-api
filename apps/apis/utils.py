@@ -21,5 +21,4 @@ def extract_timeperiod(request):
         end_date = datetime.now()
         start_date = end_date - timedelta(days=default_timeperiod)
 
-    print((start_date, end_date))
     return (start_date, end_date)
