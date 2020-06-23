@@ -5,13 +5,21 @@ date_format = '%Y-%m-%d'
 
 
 def extract_timeperiod(request):
+    """
+    Generated start_date and end_date.
+    """
     data = request.data.keys()
-    if 'startdate' in data and 'enddate' in data:
-        return (datetime.strptime(request.data['startdate'], date_format), datetime.strptime(request.data['enddate'], date_format))
-    elif 'startdate' in data:
-        return (datetime.strptime(request.data['startdate'], date_format), datetime.now())
+
+    if 'start_date' in data and 'end_date' in data:
+        start_date = datetime.strptime(request.data['start_date'], date_format)
+        end_date = datetime.strptime(request.data['end_date'], date_format)
+    elif 'start_date' in data:
+        start_date = datetime.strptime(request.data['start_date'], date_format)
+        end_date = datetime.now()
     else:
-        default_timeperiod = 60
-        enddate = datetime.now()
-        startdate = enddate - timedelta(days=default_timeperiod)
-        return (startdate, enddate)
+        default_timeperiod = 7
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=default_timeperiod)
+
+    print((start_date, end_date))
+    return (start_date, end_date)

@@ -177,7 +177,7 @@ class GetEntity(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         entity = self.getSingleObjectFromPOST(request, "entity", "uuid", Entity)
-        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario) # noqa
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario)  # noqa
         mode = self.getMode(request)
         dates = self.getDates(request)
         page = self.getPage(request)
@@ -188,13 +188,14 @@ class GetEntity(GenericGET):
             if search_keyword not in entity.keywords:
                 message = "keyword doesn't exist"
                 return Response({"success": False, "message": message})
-        if mode == 'portfolio':
+        elif mode == 'portfolio':
             entity = get_object_or_404(Entity, uuid=request.data["entity"])
         else:
             entity = get_object_or_404(StoryEntityRef, uuid=request.data["entity"])
 
         if entity:
-            stories = user_entity(entity.uuid, scenario.uuid, dates, mode, page, search_keyword)
+            stories = user_entity(entity.uuid, scenario.uuid,
+                                  dates, mode, page, search_keyword)
 
             if len(stories) == 0:
                 message = "no articles found"
@@ -220,7 +221,7 @@ class GetBucket(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         bucket = self.getSingleObjectFromPOST(request, "bucket", "uuid", Bucket)
-        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario) # noqa
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario)  # noqa
         mode = self.getMode(request)
         dates = self.getDates(request)
         page = self.getPage(request)
@@ -270,7 +271,7 @@ class GetBucketEntity(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         bucket = self.getSingleObjectFromPOST(request, "bucket", "uuid", Bucket)
-        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario) # noqa
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario)  # noqa
         mode = self.getMode(request)
         dates = self.getDates(request)
         page = self.getPage(request)
