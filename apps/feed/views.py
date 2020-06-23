@@ -2,6 +2,8 @@ import json
 
 
 from django.shortcuts import get_object_or_404
+from django.db import connection
+from datetime import datetime, timedelta
 
 from rest_framework import views
 from rest_framework import status
@@ -15,9 +17,10 @@ from apis.models.entity import Entity, StoryEntityRef
 
 from auto.utils import get_scenario_entity_count
 
-from .utils import score_in_bulk, attach_story_entities
-from .sql import user_portfolio, user_entity, user_bucket, user_entity_bucket
-from apis.utils import extract_timeperiod
+from .sql import (user_portfolio,
+                  user_entity,
+                  user_bucket,
+                  user_entity_bucket)
 
 
 class GenericGET(views.APIView):
@@ -64,6 +67,60 @@ class GenericGET(views.APIView):
             mode = "portfolio"
         return mode
 
+    def getPortfolio(self, user, scenario):
+        """
+        Return the entities in user's portfolio
+        """
+        query = """
+                select uuid from public.apis_entity where uuid in
+                (
+                select "entityID_id" from public.apis_portfolio
+                where "userID_id" = '{}'
+                and "scenarioID_id" = '{}')
+                """.format(str(user.uuid), str(scenario.uuid))
+
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            rows = [
+                str(row[0]) for row in cursor.fetchall()
+            ]
+        return rows
+
+    def getPage(self, request):
+        """
+        Get page number of the feed.
+        """
+        if "page" in request.data:
+            page = request.data["page"]
+        else:
+            page = 1
+        return page
+
+    def getDates(self, request):
+        """
+        Get dates from the request
+        """
+        date_format = '%Y-%m-%d'
+        decay = "FALSE"
+
+        data = request.data.keys()
+
+        if 'start_date' in data and 'end_date' in data:
+            start_date = datetime.strptime(request.data['start_date'], date_format)
+            end_date = datetime.strptime(request.data['end_date'], date_format)
+        elif 'start_date' in data:
+            start_date = datetime.strptime(request.data['start_date'], date_format)
+            end_date = datetime.now()
+        else:
+            default_timeperiod = 7
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=default_timeperiod)
+
+        if start_date > (datetime.now() - timedelta(days=15)):
+            decay = "TRUE"
+
+        return start_date, end_date, decay
+
 
 class GetPortfolio(GenericGET):
 
@@ -75,57 +132,40 @@ class GetPortfolio(GenericGET):
 
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
-        scenario = self.getSingleObjectFromPOST(
-            request, "scenario", "uuid", Scenario)
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario)  # noqa
         mode = self.getMode(request)
-        dates = extract_timeperiod(request)
-        # check if user is subscribed to the scenario
-        mode = self.getMode(request)
+        dates = self.getDates(request)
+        page = self.getPage(request)
+
         # check if user is subscribed to the scenario
         if user and scenario:
             if mode == 'portfolio':
-                query = """
-                            select * from public.apis_entity as2 where uuid in
-                            (
-                            select "entityID_id" from public.apis_portfolio
-                            where "userID_id" = '{}'
-                            and "scenarioID_id" = '{}'
-                            )
-                        """
-                portfolio = Entity.objects.raw(
-                    query.format(user.uuid, scenario.uuid))
-
-                portfolio = [c for c in portfolio]
-                if len(portfolio) == 0:
+                entity_ids = self.getPortfolio(user, scenario)
+                if len(entity_ids) == 0:
                     message = "no companies in portfolio"
                     return Response({"success": True, "data": message})
-
-                # fetch articles based on portfolio and
-                # all the articles of the required companies
-                # which are from the past 6 month and that's active
-                entity_ids = [str(c.uuid) for c in portfolio]
             elif mode == 'auto':
                 entity_ids = self.getEntitiesFromAuto(request, scenario.uuid, dates)
                 if len(entity_ids) == 0:
-                    message = "no entities found"
-                    return Response({"success": False, "message": message},
-                                    status=status.HTTP_404_NOT_FOUND)
+                    message = "no entities in portfolio"
+                    return Response({"success": True, "data": message})
 
             # fetch portfolio
-            stories = user_portfolio(entity_ids, scenario.uuid, dates, mode)
+            stories = user_portfolio(entity_ids, scenario.uuid, dates, mode, page)
 
             if len(stories) == 0:
                 message = "no articles found"
-                return Response({"success": True, "message": message})
-
-            stories = score_in_bulk(stories, mode=mode)
-            processed_stories = attach_story_entities(stories)
+                return Response({"success": True, "message": message},
+                                status=status.HTTP_200_OK)
 
             return Response({"success": True,
-                             "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "samples": len(stories),
+                             "data": stories},
+                            status=status.HTTP_200_OK)
+
         message = "user or scenario doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetEntity(GenericGET):
@@ -137,10 +177,10 @@ class GetEntity(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         entity = self.getSingleObjectFromPOST(request, "entity", "uuid", Entity)
-        scenario = self.getSingleObjectFromPOST(
-            request, "scenario", "uuid", Scenario)
-        dates = extract_timeperiod(request)
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario) # noqa
         mode = self.getMode(request)
+        dates = self.getDates(request)
+        page = self.getPage(request)
         search_keyword = None
 
         if mode == 'keyword':
@@ -148,27 +188,26 @@ class GetEntity(GenericGET):
             if search_keyword not in entity.keywords:
                 message = "keyword doesn't exist"
                 return Response({"success": False, "message": message})
-        elif mode == 'portfolio':
+        if mode == 'portfolio':
             entity = get_object_or_404(Entity, uuid=request.data["entity"])
         else:
             entity = get_object_or_404(StoryEntityRef, uuid=request.data["entity"])
 
         if entity:
-            stories = user_entity(entity.uuid, scenario.uuid, dates, mode, search_keyword)
+            stories = user_entity(entity.uuid, scenario.uuid, dates, mode, page, search_keyword)
 
             if len(stories) == 0:
                 message = "no articles found"
-                return Response({"success": True, "message": message})
-
-            stories = score_in_bulk(stories, mode=mode)
-            processed_stories = attach_story_entities(stories)
-
+                return Response({"success": True, "message": message},
+                                status=status.HTTP_200_OK)
             return Response({"success": True,
-                             "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "samples": len(stories),
+                             "data": stories},
+                            status=status.HTTP_200_OK)
 
         message = "user or entity doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBucket(GenericGET):
@@ -181,55 +220,45 @@ class GetBucket(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         bucket = self.getSingleObjectFromPOST(request, "bucket", "uuid", Bucket)
-        dates = extract_timeperiod(request)
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario) # noqa
         mode = self.getMode(request)
+        dates = self.getDates(request)
+        page = self.getPage(request)
+
+        if bucket.scenarioID != scenario:
+            message = "Bucket does not exist in Scenario."
+            return Response({"success": False, "message": message},
+                            status=status.HTTP_404_NOT_FOUND)
 
         if user and bucket:
             if mode == 'portfolio':
-                query = """
-                            select * from public.apis_entity as2 where uuid in
-                            (
-                            select "entityID_id" from public.apis_portfolio
-                            where "userID_id" = '{}'
-                            and "scenarioID_id" = '{}'
-                            )
-                        """
-                portfolio = Entity.objects.raw(
-                    query.format(user.uuid, bucket.scenarioID.uuid))
-
-                portfolio = [c for c in portfolio]
-
-                if len(portfolio) == 0:
-                    message = "no companies in portfolio"
-                    return Response({"success": True, "data": message})
-
-                entity_ids = [str(c.uuid) for c in portfolio]
+                entity_ids = self.getPortfolio(user, scenario)
             elif mode == 'auto':
                 entity_ids = self.getEntitiesFromAuto(
                     request, bucket.scenarioID.uuid, dates)
 
-                # if no entities exists, return
-                if len(entity_ids) == 0:
-                    message = "no entities found"
-                    return Response({"success": False, "message": message},
-                                    status=status.HTTP_404_NOT_FOUND)
+            # if no entities exists, return
+            if len(entity_ids) == 0:
+                message = "no entities found"
+                return Response({"success": False, "message": message},
+                                status=status.HTTP_404_NOT_FOUND)
 
             stories = user_bucket(bucket.uuid, entity_ids,
-                                  bucket.scenarioID.uuid, dates, mode)
+                                  scenario.uuid, dates, mode, page)
 
             if len(stories) == 0:
                 message = "no articles found"
-                return Response({"success": True, "message": message})
-
-            stories = score_in_bulk(stories, bucket=True, mode=mode)
-            processed_stories = attach_story_entities(stories)
+                return Response({"success": True, "message": message},
+                                status=status.HTTP_200_OK)
 
             return Response({"success": True,
-                             "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "samples": len(stories),
+                             "data": stories},
+                            status=status.HTTP_200_OK)
 
-        message = "user or bucket doesn't exist"
-        return Response({"success": False, "message": message})
+        message = "User or Bucket doesn't exist."
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)
 
 
 class GetBucketEntity(GenericGET):
@@ -241,31 +270,35 @@ class GetBucketEntity(GenericGET):
     def post(self, request):
         user = self.getSingleObjectFromPOST(request, "user", "uuid", DashUser)
         bucket = self.getSingleObjectFromPOST(request, "bucket", "uuid", Bucket)
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario) # noqa
         mode = self.getMode(request)
-        dates = extract_timeperiod(request)
+        dates = self.getDates(request)
+        page = self.getPage(request)
+
+        if bucket.scenarioID != scenario:
+            message = "Bucket does not exist in Scenario."
+            return Response({"success": False, "message": message},
+                            status=status.HTTP_404_NOT_FOUND)
+
         if mode == 'portfolio':
             entity = get_object_or_404(Entity, uuid=request.data["entity"])
         else:
             entity = get_object_or_404(StoryEntityRef, uuid=request.data["entity"])
 
         if bucket and entity:
-            if mode == "portfolio" and entity.scenarioID != bucket.scenarioID:
-                message = "this entity is not tracked under this scenario'"
-                return Response({"success": False, "message": message})
-
             stories = user_entity_bucket(
-                bucket.uuid, entity.uuid, bucket.scenarioID.uuid, dates, mode)
+                bucket.uuid, entity.uuid, scenario.uuid, dates, mode, page)
 
             if len(stories) == 0:
                 message = "no articles found"
-                return Response({"success": True, "message": message})
-
-            stories = score_in_bulk(stories, bucket=True, mode=mode)
-            processed_stories = attach_story_entities(stories)
+                return Response({"success": True, "message": message},
+                                status=status.HTTP_200_OK)
 
             return Response({"success": True,
-                             "samples": len(processed_stories),
-                             "data": processed_stories})
+                             "samples": len(stories),
+                             "data": stories},
+                            status=status.HTTP_200_OK)
 
         message = "user or bucket doesn't exist"
-        return Response({"success": False, "message": message})
+        return Response({"success": False, "message": message},
+                        status=status.HTTP_404_NOT_FOUND)

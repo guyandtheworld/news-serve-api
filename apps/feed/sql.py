@@ -1,55 +1,24 @@
 from django.db import connection
 
 
-# get entity name, and story body
-# get entities from title and body
-# get sentiment from title and body
-EXTRA_INFO_PORT = """
-            left join (select distinct "storyID_id", "cluster"
-            from ml_clustermap clustermap inner join
-            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
-            on story.uuid = ml_cluster."storyID_id"
-            inner join apis_entity entity on story."entityID_id" = entity.uuid
-            inner join (select "storyID_id", (array_agg(body))[1] as body
-            from apis_storybody group by "storyID_id") story_body
-            on story.uuid = story_body."storyID_id"
-            inner join
-            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
-            from apis_storysentiment where is_headline = true group by "storyID_id") title_sentiment
-            on story.uuid = title_sentiment."storyID_id"
-            inner join
-            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
-            from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
-            on story.uuid = body_sentiment."storyID_id"
-            """
-
-EXTRA_INFO_AUTO = """
-            left join (select distinct "storyID_id", "cluster"
-            from ml_clustermap clustermap inner join
-            ml_cluster clust on clustermap."clusterID_id" = clust.uuid) ml_cluster
-            on story.uuid = ml_cluster."storyID_id"
-            inner join apis_storyentityref entref on entitymap."entityID_id" = entref.uuid
-            inner join (select "storyID_id", (array_agg(body))[1] as body
-            from apis_storybody group by "storyID_id") story_body
-            on entitymap."storyID_id" = story_body."storyID_id"
-            inner join
-            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
-            from apis_storysentiment where is_headline = true group by "storyID_id") title_sentiment
-            on entitymap."storyID_id" = title_sentiment."storyID_id"
-            inner join
-            (select "storyID_id", (array_agg(sentiment))[1] as sentiment
-            from apis_storysentiment where is_headline = false group by "storyID_id") body_sentiment
-            on entitymap."storyID_id" = body_sentiment."storyID_id"
-            """
+COUNT = 20
 
 
-def dictfetchall(cursor):
-    "Return all rows from a cursor as a dict"
-    columns = [col[0] for col in cursor.description]
-    return [
-        dict(zip(columns, row))
-        for row in cursor.fetchall()
-    ]
+def dictfetchall(query, start_date=None, end_date=None):
+    """
+    Return all rows from a cursor as a dict
+    """
+    with connection.cursor() as cursor:
+        if start_date is not None and end_date is not None:
+            cursor.execute(query, [start_date, end_date])
+        else:
+            cursor.execute(query)
+        columns = [col[0] for col in cursor.description]
+        rows = [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+    return rows
 
 
 def get_latest_model_uuid(scenario):
@@ -69,245 +38,257 @@ def get_latest_model_uuid(scenario):
     return str(row[0])
 
 
-def user_portfolio(entity_ids, scenario_id, dates, mode):
+def user_portfolio(entity_ids, scenario_id, dates, mode, page):
     """
-    query to filter stories based on the portfolio
-    language and published date and then return
-    the body, entities, and sentiment of the
-    title as well as the body
+    Query to generate feed based on the multiple entities.
     """
 
-    ids_str = "', '".join(entity_ids)
-    ids_str = "('{}')".format(ids_str)
+    entity_ids_str = "', '".join(entity_ids)
+    entity_ids_str = "('{}')".format(entity_ids_str)
     start_date = "'{}'".format(dates[0])
     end_date = "'{}'".format(dates[1])
+    decay = dates[2]
 
-    if mode == 'portfolio':
+    # used for pagination
+    limit = COUNT * page
+    offset = limit - COUNT
+
+    if mode == "portfolio":
         query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, "cluster"
-                FROM public.apis_story as story
-                {}
-                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and "entityID_id" in {}
-                and published_date > %s and published_date <= %s
-            """.format(EXTRA_INFO_PORT, ids_str)
+                SELECT distinct title, feed."storyID", feed.url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                feed.hotness->'general' AS hotness
+                from feed_portfoliowarehouse feed inner join
+                (select distinct url, uuid, "storyID",
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness
+                from (select uuid, "storyID", url, hotness->'general' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                from feed_portfoliowarehouse
+                where published_date > %s and published_date <= %s
+                and "entityID" in {}) temphot) hottable
+                on feed.uuid = hottable.uuid
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(decay, entity_ids_str, offset, limit)
     elif mode == "auto":
         query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, "domain", source_country, entitymap."entityID_id", entref."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, "cluster"
-                from  apis_storyentitymap entitymap
-                inner join apis_story story on entitymap."storyID_id" = story.uuid
-                {}
-                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and entitymap."entityID_id" in {}
-                and story_body.body is not null
-                and "scenarioID_id" = '{}'
-                and published_date > %s and published_date <= %s
-                """.format(EXTRA_INFO_AUTO, ids_str, scenario_id)
-
-    with connection.cursor() as cursor:
-        cursor.execute(query, [start_date, end_date])
-        rows = dictfetchall(cursor)
+                SELECT distinct title, "storyID", url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", body, "cluster", entities,
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness from
+                (SELECT distinct url, title, "storyID", published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
+                hotness->'general' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                FROM feed_autowarehouse
+                WHERE published_date > %s AND published_date <= %s
+                AND "scenarioID" = '{}' AND "entityID" in {}) hottable
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(decay, scenario_id, entity_ids_str, offset, limit)
+    rows = dictfetchall(query, start_date, end_date)
     return rows
 
 
-def user_entity(entity_id, scenario_id, dates, mode, search_keyword=None):
+def user_entity(entity_id, scenario_id, dates, mode, page, search_keyword=None):
     """
-    query to filter stories based on the entity
-    language and published date and then return
-    the body, entities, and sentiment of the
-    title as well as the body
+    Query to generate feed based on the entity.
     """
 
-    id_str = "'{}'".format(entity_id)
-    start_date = "'{}'".format(dates[0])
-    end_date = "'{}'".format(dates[1])
+    entity_id_str = "'{}'".format(entity_id)
     keyword = "'{}'".format(search_keyword)
-    if mode == 'keyword':
-        query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, "cluster"
-                FROM public.apis_story as story
-                {}
-                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and "search_keyword" = {}
-                and published_date > %s and published_date <= %s
-                """.format(EXTRA_INFO_PORT, keyword)
-    elif mode == 'portfolio':
-        query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, "domain", source_country, "entityID_id", entity."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, "cluster"
-                FROM public.apis_story as story
-                {}
-                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and "entityID_id" = {}
-                and published_date > %s and published_date <= %s
-                """.format(EXTRA_INFO_PORT, id_str)
-    elif mode == "auto":
-        query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, "domain", source_country, entitymap."entityID_id", entref."name", story_body.body,
-                title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, "cluster"
-                from  apis_storyentitymap entitymap
-                inner join apis_story story on entitymap."storyID_id" = story.uuid
-                {}
-                where "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and entitymap."entityID_id" = {}
-                and "scenarioID_id" = '{}'
-                and published_date > %s and published_date <= %s
-                """.format(EXTRA_INFO_AUTO, id_str, scenario_id)
-    with connection.cursor() as cursor:
-        cursor.execute(query, [start_date, end_date])
-        rows = dictfetchall(cursor)
-    return rows
-
-
-def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode):
-    """
-    given a bucket id, generate feed to score the articles
-    """
     start_date = "'{}'".format(dates[0])
     end_date = "'{}'".format(dates[1])
-    bucket_id = "'{}'".format(bucket_id)
+    decay = dates[2]
 
-    ids_str = "', '".join(entity_ids)
-    entity_ids = "('{}')".format(ids_str)
+    # used for pagination
+    limit = COUNT * page
+    offset = limit - COUNT
 
-    model_id = get_latest_model_uuid(scenario_id)
-
-    if mode == 'portfolio':
+    if mode == "keyword":
         query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
-                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster" from apis_story story
-                inner join
-                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
-                inner join
-                (select * from apis_source) src
-                on src.uuid = bucket_score."sourceID_id") tbl
-                on story.uuid = tbl."storyID_id"
-                {}
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and published_date > %s and published_date <= %s
-                and "entityID_id" in {}
-                """.format(bucket_id, model_id, EXTRA_INFO_PORT, entity_ids)
+                SELECT distinct title, feed."storyID", feed.url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                feed.hotness->'general' AS hotness
+                from feed_portfoliowarehouse feed inner join
+                (select distinct url, uuid, "storyID",
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness
+                from (select uuid, "storyID", url, hotness->'general' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                from feed_portfoliowarehouse
+                where published_date > %s and published_date <= %s
+                and "search_keyword" = {}) temphot) hottable
+                on feed.uuid = hottable.uuid
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(decay, keyword, offset, limit)
+    elif mode == "portfolio":
+        query = """
+                SELECT distinct title, feed."storyID", feed.url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                feed.hotness->'general' AS hotness
+                from feed_portfoliowarehouse feed inner join
+                (select distinct url, uuid, "storyID",
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness
+                from (select uuid, "storyID", url, hotness->'general' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                from feed_portfoliowarehouse
+                where published_date > %s and published_date <= %s
+                and "entityID" = {}) temphot) hottable
+                on feed.uuid = hottable.uuid
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(decay, entity_id_str, offset, limit)
     elif mode == "auto":
         query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, internal_source, "domain", source_country, entitymap."entityID_id", entref."name", "language",
-                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster"
-                from apis_storyentitymap entitymap
-                inner join apis_story story
-                on entitymap."storyID_id" = story.uuid
-                inner join
-                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
-                inner join
-                (select * from apis_source) src
-                on src.uuid = bucket_score."sourceID_id") tbl
-                on story.uuid = tbl."storyID_id"
-                {}
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and published_date > %s and published_date <= %s
-                and entitymap."entityID_id" in {}
-                and "scenarioID_id" = '{}'
-                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_ids, scenario_id)
-    with connection.cursor() as cursor:
-        cursor.execute(query, [start_date, end_date])
-        rows = dictfetchall(cursor)
+                SELECT distinct title, "storyID", url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", body, "cluster", entities,
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness from
+                (SELECT distinct url, title, "storyID", published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
+                hotness->'general' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                FROM feed_autowarehouse
+                WHERE published_date > %s AND published_date <= %s
+                AND "scenarioID" = '{}' AND "entityID" = {}) hottable
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(decay, scenario_id, entity_id_str, offset, limit)
+
+    rows = dictfetchall(query, start_date, end_date)
     return rows
 
 
-def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode):
+def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode, page):
     """
-    get all articles for a particular entity if it falls under
-    a bucket
+    Query to generate feed based on the bucket for multiple entities.
     """
-    bucket_id = "'{}'".format(bucket_id)
-    entity_id = "'{}'".format(entity_id)
+
+    entity_ids_str = "', '".join(entity_ids)
+    entity_ids_str = "('{}')".format(entity_ids_str)
     start_date = "'{}'".format(dates[0])
     end_date = "'{}'".format(dates[1])
+    decay = dates[2]
 
-    # get latest model version uuid
-    model_id = get_latest_model_uuid(scenario_id)
+    # used for pagination
+    limit = COUNT * page
+    offset = limit - COUNT
 
-    if mode == 'portfolio':
+    if mode == "portfolio":
         query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, internal_source, "domain", source_country, "entityID_id", entity."name", "language",
-                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster" from apis_story story
-                inner join
-                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
-                inner join
-                (select * from apis_source) src
-                on src.uuid = bucket_score."sourceID_id") tbl
-                on story.uuid = tbl."storyID_id"
-                {}
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and published_date > %s and published_date <= %s
-                and "entityID_id" = {}
-                """.format(bucket_id, model_id, EXTRA_INFO_PORT, entity_id)
+                SELECT distinct title, feed."storyID", feed.url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                feed.hotness->'general' AS hotness
+                from feed_portfoliowarehouse feed inner join
+                (select distinct url, uuid, "storyID",
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness
+                from (select uuid, "storyID", url, hotness->'{}' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                from feed_portfoliowarehouse
+                where published_date > %s and published_date <= %s
+                and "entityID" in {}) temphot) hottable
+                on feed.uuid = hottable.uuid
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(bucket_id, decay, entity_ids_str, offset, limit)
     elif mode == "auto":
         query = """
-                select unique_hash, story.uuid, title, story.url, search_keyword,
-                published_date, internal_source, "domain", source_country, entitymap."entityID_id", entref."name", "language",
-                "source", "grossScore", "sourceScore", title_sentiment.sentiment as title_sentiment,
-                body_sentiment.sentiment as body_sentiment, story_body.body, "cluster"
-                from apis_storyentitymap entitymap
-                inner join apis_story story
-                on entitymap."storyID_id" = story.uuid
-                inner join
-                (select "storyID_id", "storyDate", src."name" as source, "grossScore", src.score as "sourceScore" from
-                (select * from apis_bucketscore where "bucketID_id" = {} and "modelID_id"='{}' and "grossScore" > .7) bucket_score
-                inner join
-                (select * from apis_source) src
-                on src.uuid = bucket_score."sourceID_id") tbl
-                on story.uuid = tbl."storyID_id"
-                {}
-                and "language" in ('english', 'US', 'CA', 'AU', 'IE')
-                and published_date > %s and published_date <= %s
-                and entitymap."entityID_id" = {}
-                and "scenarioID_id" = '{}'
-                """.format(bucket_id, model_id, EXTRA_INFO_AUTO, entity_id, scenario_id)
+                SELECT distinct title, "storyID", url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", body, "cluster", entities,
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness from
+                (SELECT distinct url, title, "storyID", published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
+                hotness->'{}' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                FROM feed_autowarehouse
+                WHERE published_date > %s AND published_date <= %s
+                AND "scenarioID" = '{}' AND "entityID" in {}) hottable
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(bucket_id, decay, scenario_id, entity_ids_str,
+                           offset, limit)
 
-    with connection.cursor() as cursor:
-        cursor.execute(query, [start_date, end_date])
-        rows = dictfetchall(cursor)
+    rows = dictfetchall(query, start_date, end_date)
     return rows
 
 
-def story_entities(story_ids):
+def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
     """
-    takes a list of story ids and queries the apis_storyentitymap to find
-    the list of entities in thsoe stories
+    Query to generate feed based on the bucket and the entity.
     """
 
-    ids_str = "', '".join(story_ids)
-    story_ids = "('{}')".format(ids_str)
+    entity_id_str = "'{}'".format(entity_id)
+    start_date = "'{}'".format(dates[0])
+    end_date = "'{}'".format(dates[1])
+    decay = dates[2]
 
-    query = """
-        select sem.uuid,"storyID_id",name,type,"entityID_id" from apis_storyentitymap as sem
-        inner join apis_storyentityref as enref on sem."entityID_id" = enref.uuid
-        inner join (select name as type,uuid as type_id from apis_entitytype) as entype on enref."typeID_id" = entype.type_id
-        where "storyID_id" in {}
-        """.format(story_ids)
+    # used for pagination
+    limit = COUNT * page
+    offset = limit - COUNT
 
-    with connection.cursor() as cursor:
-        cursor.execute(query)
-        rows = dictfetchall(cursor)
+    if mode == "portfolio":
+        query = """
+                SELECT distinct title, feed."storyID", feed.url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                feed.hotness->'general' AS hotness
+                from feed_portfoliowarehouse feed inner join
+                (select distinct url, uuid, "storyID",
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness
+                from (select uuid, "storyID", url, hotness->'{}' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                from feed_portfoliowarehouse
+                where published_date > %s and published_date <= %s
+                and "entityID" = {}) temphot) hottable
+                on feed.uuid = hottable.uuid
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(bucket_id, decay, entity_id_str, offset, limit)
+    elif mode == "auto":
+        query = """
+                SELECT distinct title, "storyID", url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", body, "cluster", entities,
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness from
+                (SELECT distinct url, title, "storyID", published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
+                hotness->'{}' as hotness,
+                current_date - published_date::date as days, {} as "decay"
+                FROM feed_autowarehouse
+                WHERE published_date > %s AND published_date <= %s
+                AND "scenarioID" = '{}' AND "entityID" = {}) hottable
+                ORDER BY hotness desc OFFSET {} LIMIT {}
+                """.format(bucket_id, decay, scenario_id, entity_id_str,
+                           offset, limit)
+
+    rows = dictfetchall(query, start_date, end_date)
     return rows
