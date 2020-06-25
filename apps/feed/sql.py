@@ -57,7 +57,7 @@ def user_portfolio(entity_ids, scenario_id, dates, mode, page):
         query = """
                 SELECT distinct title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
-                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
                 (select distinct url, uuid, "storyID",
@@ -115,8 +115,8 @@ def user_entity(entity_id, scenario_id, dates, mode, page, search_keyword=None):
         query = """
                 SELECT distinct title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
-                "scenarioID", LEFT(story_body, 400), "cluster", entities,
-                feed.hotness->'general' AS hotness
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
+                search_keyword, feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
                 (select distinct url, uuid, "storyID",
                 CASE WHEN days = 0 THEN hotness::float
@@ -135,7 +135,7 @@ def user_entity(entity_id, scenario_id, dates, mode, page, search_keyword=None):
         query = """
                 SELECT distinct title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
-                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
                 (select distinct url, uuid, "storyID",
@@ -194,7 +194,7 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode, page):
         query = """
                 SELECT distinct title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
-                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
                 (select distinct url, uuid, "storyID",
@@ -253,7 +253,7 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
         query = """
                 SELECT distinct title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
-                "scenarioID", LEFT(story_body, 400), "cluster", entities,
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
                 (select distinct url, uuid, "storyID",
