@@ -277,6 +277,10 @@ class GetBucketWeights(GenericGET):
 
 
 class ListAllScenario(views.APIView):
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAlrtAdmin]
+    
     def get(self, request, format=None):
         data = Scenario.objects.filter(status="active")
         serializer = ScenarioSerializer(data, many=True)
@@ -290,6 +294,10 @@ class ListAllScenario(views.APIView):
 
 
 class ListAllClients(views.APIView):
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAlrtAdmin]
+
     def get(self, request, format=None):
         data = Client.objects.all()
         serializer = ClientSerializer(data, many=True)
