@@ -75,14 +75,14 @@ def user_portfolio(entity_ids, scenario_id, dates, mode, page):
                 """.format(decay, entity_ids_str, offset, limit)
     elif mode == "auto":
         query = """
-                SELECT distinct title, "storyID", url, published_date,
+                SELECT title, "storyID", url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", body, "cluster", entities,
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
                 END AS hotness from
-                (SELECT distinct url, title, "storyID", published_date,
+                (SELECT url, title, "storyID", published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 hotness->'general' as hotness,
@@ -113,12 +113,12 @@ def user_entity(entity_id, scenario_id, dates, mode, page, search_keyword=None):
 
     if mode == "keyword":
         query = """
-                SELECT distinct title, feed."storyID", feed.url, published_date,
+                SELECT title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 search_keyword, feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
-                (select distinct url, uuid, "storyID",
+                (select url, uuid, "storyID",
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
@@ -133,12 +133,12 @@ def user_entity(entity_id, scenario_id, dates, mode, page, search_keyword=None):
                 """.format(decay, keyword, offset, limit)
     elif mode == "portfolio":
         query = """
-                SELECT distinct title, feed."storyID", feed.url, published_date,
+                SELECT title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
-                (select distinct url, uuid, "storyID",
+                (select url, uuid, "storyID",
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
@@ -153,14 +153,14 @@ def user_entity(entity_id, scenario_id, dates, mode, page, search_keyword=None):
                 """.format(decay, entity_id_str, offset, limit)
     elif mode == "auto":
         query = """
-                SELECT distinct title, "storyID", url, published_date,
+                SELECT title, "storyID", url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", body, "cluster", entities,
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
                 END AS hotness from
-                (SELECT distinct url, title, "storyID", published_date,
+                (SELECT url, title, "storyID", published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 hotness->'general' as hotness,
@@ -192,12 +192,12 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode, page):
 
     if mode == "portfolio":
         query = """
-                SELECT distinct title, feed."storyID", feed.url, published_date,
+                SELECT title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
-                (select distinct url, uuid, "storyID",
+                (select url, uuid, "storyID",
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
@@ -212,14 +212,14 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode, page):
                 """.format(bucket_id, decay, entity_ids_str, offset, limit)
     elif mode == "auto":
         query = """
-                SELECT distinct title, "storyID", url, published_date,
+                SELECT title, "storyID", url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", body, "cluster", entities,
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
                 END AS hotness from
-                (SELECT distinct url, title, "storyID", published_date,
+                (SELECT url, title, "storyID", published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 hotness->'{}' as hotness,
@@ -251,12 +251,12 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
 
     if mode == "portfolio":
         query = """
-                SELECT distinct title, feed."storyID", feed.url, published_date,
+                SELECT title, feed."storyID", feed.url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 feed.hotness->'general' AS hotness
                 from feed_portfoliowarehouse feed inner join
-                (select distinct url, uuid, "storyID",
+                (select url, uuid, "storyID",
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
@@ -271,14 +271,14 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
                 """.format(bucket_id, decay, entity_id_str, offset, limit)
     elif mode == "auto":
         query = """
-                SELECT distinct title, "storyID", url, published_date,
+                SELECT title, "storyID", url, published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", body, "cluster", entities,
                 CASE WHEN days = 0 THEN hotness::float
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
                 END AS hotness from
-                (SELECT distinct url, title, "storyID", published_date,
+                (SELECT url, title, "storyID", published_date,
                 "domain", source_country, entity_name, "entityID",
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 hotness->'{}' as hotness,

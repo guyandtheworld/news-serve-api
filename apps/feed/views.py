@@ -121,6 +121,20 @@ class GenericGET(views.APIView):
 
         return start_date, end_date, decay
 
+    def filterDuplicates(self, articles):
+        """
+        Drop articles if they're duplicates.
+        """
+        urls = []
+        filtered = []
+
+        for article in articles:
+            if article['url'] not in urls:
+                filtered.append(article)
+                urls.append(article['url'])
+
+        return filtered
+
 
 class GetPortfolio(GenericGET):
 
@@ -157,6 +171,8 @@ class GetPortfolio(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message},
                                 status=status.HTTP_200_OK)
+
+            stories = self.filterDuplicates(stories)
 
             return Response({"success": True,
                              "samples": len(stories),
@@ -201,6 +217,9 @@ class GetEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message},
                                 status=status.HTTP_200_OK)
+
+            stories = self.filterDuplicates(stories)
+
             return Response({"success": True,
                              "samples": len(stories),
                              "data": stories},
@@ -252,6 +271,8 @@ class GetBucket(GenericGET):
                 return Response({"success": True, "message": message},
                                 status=status.HTTP_200_OK)
 
+            stories = self.filterDuplicates(stories)
+
             return Response({"success": True,
                              "samples": len(stories),
                              "data": stories},
@@ -294,6 +315,8 @@ class GetBucketEntity(GenericGET):
                 message = "no articles found"
                 return Response({"success": True, "message": message},
                                 status=status.HTTP_200_OK)
+
+            stories = self.filterDuplicates(stories)
 
             return Response({"success": True,
                              "samples": len(stories),
