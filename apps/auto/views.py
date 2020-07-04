@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
+from apis.models.scenario import Scenario
 from apis.models.users import DashUser
 from apis.models.entity import (EntityType,
                                 StoryEntityRef)
@@ -20,14 +21,14 @@ from .serializers import (EntityTypeSerializer,
 
 class ViewEntityType(views.APIView):
     """
-    List all Entities and Aliases being Tracked in a Scenario
+    List all default Entity types
     """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         # fetch entity objects in portfolio
-        entities = EntityType.objects.all()
+        entities = EntityType.objects.filter(entry="auto")
         serializer = EntityTypeSerializer(entities, many=True)
         return Response({"success": True, "length": len(entities),
                          "data": serializer.data},
@@ -156,3 +157,33 @@ class MergeParents(views.APIView):
         return Response({"success": True},
                         status=status.HTTP_200_OK
                         )
+
+
+class ScenarioEntityType(views.APIView):
+    """
+    List all Entity types being Tracked in a Scenario
+    """
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # fetch entity objects in the scenario
+        scenario = get_object_or_404(Scenario, uuid=request.data["scenario"])
+
+        if scenario.customEntity != None and len(scenario.customEntity) > 0:
+            entities = []
+            for type_id in scenario.customEntity:
+                entity_type = EntityType.objects.get(uuid=type_id)
+                entities.append(entity_type)
+
+            entities.extend(EntityType.objects.filter(entry="auto"))
+            serializer = EntityTypeSerializer(entities, many=True)
+            return Response({"success": True, "length": len(entities),
+                             "data": serializer.data},
+                             status=status.HTTP_200_OK)                
+
+        entities = EntityType.objects.filter(entry="auto")
+        serializer = EntityTypeSerializer(entities, many=True)
+        return Response({"success": True, "length": len(entities),
+                         "data": serializer.data},
+                        status=status.HTTP_200_OK)
