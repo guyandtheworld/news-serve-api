@@ -4,6 +4,7 @@ from django.contrib.postgres.fields import ArrayField
 
 
 STATUSES = (("active", "Active"), ("demo", "Demo"), ("retired", "Retired"))
+ENTRY = (("custom", "Custom"), ("auto", "Auto"))
 
 
 class Entity(models.Model):
@@ -91,6 +92,7 @@ class EntityType(models.Model):
     uuid = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
+    entry = models.CharField(max_length=10, choices=ENTRY)
 
     def __str__(self):
         return self.name
