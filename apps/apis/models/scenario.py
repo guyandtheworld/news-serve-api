@@ -15,6 +15,7 @@ class Scenario(models.Model):
     mode = models.CharField(max_length=10, choices=MODES)
     trackingDays = models.SmallIntegerField()
     entityType = models.ForeignKey("EntityType", on_delete=models.PROTECT)
+    customEntity = ArrayField(models.CharField(max_length=200), null=True, blank=True)
     description = models.CharField(max_length=250, blank=True)
 
     def __str__(self):
