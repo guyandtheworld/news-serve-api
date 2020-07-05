@@ -202,14 +202,15 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode, page):
                 WHEN "decay" = FALSE THEN hotness::float
                 ELSE hotness::float * EXP(-0.01 * days * days)
                 END AS hotness
-                from (select uuid, "storyID", url, hotness->'{}' as hotness,
+                FROM (select uuid, "storyID", url, hotness->'{}' as hotness,
                 current_date - published_date::date as days, {} as "decay"
-                from feed_portfoliowarehouse
-                where published_date > %s and published_date <= %s
-                and "entityID" in {}) temphot) hottable
-                on feed.uuid = hottable.uuid
+                FROM feed_portfoliowarehouse
+                WHERE published_date > %s and published_date <= %s
+                AND (bucket_scores->'{}')::float > .5
+                AND "entityID" in {}) temphot) hottable
+                ON feed.uuid = hottable.uuid
                 ORDER BY hotness desc OFFSET {} LIMIT {}
-                """.format(bucket_id, decay, entity_ids_str, offset, limit)
+                """.format(bucket_id, decay, bucket_id, entity_ids_str, offset, limit)
     elif mode == "auto":
         query = """
                 SELECT title, "storyID", url, published_date,
@@ -226,9 +227,10 @@ def user_bucket(bucket_id, entity_ids, scenario_id, dates, mode, page):
                 current_date - published_date::date as days, {} as "decay"
                 FROM feed_autowarehouse
                 WHERE published_date > %s AND published_date <= %s
+                AND (bucket_scores->'{}')::float > .5
                 AND "scenarioID" = '{}' AND "entityID" in {}) hottable
                 ORDER BY hotness desc OFFSET {} LIMIT {}
-                """.format(bucket_id, decay, scenario_id, entity_ids_str,
+                """.format(bucket_id, decay, bucket_id, scenario_id, entity_ids_str,
                            offset, limit)
 
     rows = dictfetchall(query, start_date, end_date)
@@ -265,10 +267,11 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
                 current_date - published_date::date as days, {} as "decay"
                 from feed_portfoliowarehouse
                 where published_date > %s and published_date <= %s
-                and "entityID" = {}) temphot) hottable
+                AND (bucket_scores->'{}')::float > .5
+                AND "entityID" = {}) temphot) hottable
                 on feed.uuid = hottable.uuid
                 ORDER BY hotness desc OFFSET {} LIMIT {}
-                """.format(bucket_id, decay, entity_id_str, offset, limit)
+                """.format(bucket_id, decay, bucket_id, entity_id_str, offset, limit)
     elif mode == "auto":
         query = """
                 SELECT title, "storyID", url, published_date,
@@ -285,9 +288,10 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
                 current_date - published_date::date as days, {} as "decay"
                 FROM feed_autowarehouse
                 WHERE published_date > %s AND published_date <= %s
+                AND (bucket_scores->'{}')::float > .5
                 AND "scenarioID" = '{}' AND "entityID" = {}) hottable
                 ORDER BY hotness desc OFFSET {} LIMIT {}
-                """.format(bucket_id, decay, scenario_id, entity_id_str,
+                """.format(bucket_id, decay, bucket_id, scenario_id, entity_id_str,
                            offset, limit)
 
     rows = dictfetchall(query, start_date, end_date)
