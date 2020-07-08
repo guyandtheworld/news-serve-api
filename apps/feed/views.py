@@ -20,7 +20,8 @@ from auto.utils import get_scenario_entity_count
 from .sql import (user_portfolio,
                   user_entity,
                   user_bucket,
-                  user_entity_bucket)
+                  user_entity_bucket,
+                  feed_search)
 
 
 class GenericGET(views.APIView):
@@ -326,3 +327,33 @@ class GetBucketEntity(GenericGET):
         message = "user or bucket doesn't exist"
         return Response({"success": False, "message": message},
                         status=status.HTTP_404_NOT_FOUND)
+
+class FeedSearch(GenericGET):
+    """
+    Search feed for news that contains the given keyword
+    """
+
+    def post(self, request):
+
+        scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario)  # noqa
+        page = self.getPage(request)
+        keyword = request.data["keyword"]
+        if len(keyword) < 3:
+            msg = "Please provide a better description"
+            return Response({"success": False, "data": msg},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        # fetch news
+        stories = feed_search(scenario.uuid, keyword, page)
+
+        if len(stories) == 0:
+            message = "no articles found"
+            return Response({"success": True, "message": message},
+                             status=status.HTTP_200_OK)
+
+        stories = self.filterDuplicates(stories)
+
+        return Response({"success": True,
+                         "samples": len(stories),
+                         "data": stories},
+                        status=status.HTTP_200_OK)

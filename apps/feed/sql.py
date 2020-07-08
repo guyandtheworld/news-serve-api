@@ -296,3 +296,35 @@ def user_entity_bucket(bucket_id, entity_id, scenario_id, dates, mode, page):
 
     rows = dictfetchall(query, start_date, end_date)
     return rows
+
+
+def feed_search(scenario_id, keyword, page):
+    """
+    Query to generate feed based on the search keyword.
+    """
+
+    # used for pagination
+    limit = COUNT * page
+    offset = limit - COUNT
+
+    query = """
+                SELECT title, "storyID", url, published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", body, "cluster", entities,
+                CASE WHEN days = 0 THEN hotness::float
+                WHEN "decay" = FALSE THEN hotness::float
+                ELSE hotness::float * EXP(-0.01 * days * days)
+                END AS hotness from
+                (SELECT url, title, "storyID", published_date,
+                "domain", source_country, entity_name, "entityID",
+                "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
+                hotness->'general' as hotness,
+                current_date - published_date::date as days, FALSE as "decay"
+                FROM feed_autowarehouse
+                WHERE "scenarioID" = '{}'
+                and title ~* '{}') hottable
+                ORDER BY published_date desc OFFSET {} LIMIT {}
+                """.format(scenario_id, keyword, offset, limit)
+    
+    rows = dictfetchall(query)
+    return rows
