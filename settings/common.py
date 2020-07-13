@@ -135,7 +135,7 @@ CORS_ORIGIN_WHITELIST = [
     "https://www.alrt.ai",
     "https://alrt.ai",
     "https://dev-dash-bhkat7prtq-de.a.run.app",
-    "https://dashdev.alrt.ai/",
+    "https://dashdev.alrt.ai",
 ]
 
 
