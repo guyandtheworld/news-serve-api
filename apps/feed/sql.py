@@ -320,11 +320,11 @@ def feed_search(scenario_id, keyword, page):
                 "scenarioID", LEFT(story_body, 400) as body, "cluster", entities,
                 hotness->'general' as hotness,
                 current_date - published_date::date as days, FALSE as "decay"
-                FROM feed_autowarehouse
+                FROM feed_portfoliowarehouse
                 WHERE "scenarioID" = '{}'
                 and title ~* '{}') hottable
                 ORDER BY published_date desc OFFSET {} LIMIT {}
                 """.format(scenario_id, keyword, offset, limit)
-    
+
     rows = dictfetchall(query)
     return rows

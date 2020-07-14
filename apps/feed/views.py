@@ -328,6 +328,7 @@ class GetBucketEntity(GenericGET):
         return Response({"success": False, "message": message},
                         status=status.HTTP_404_NOT_FOUND)
 
+
 class FeedSearch(GenericGET):
     """
     Search feed for news that contains the given keyword
@@ -337,7 +338,14 @@ class FeedSearch(GenericGET):
 
         scenario = self.getSingleObjectFromPOST(request, "scenario", "uuid", Scenario)  # noqa
         page = self.getPage(request)
-        keyword = request.data["keyword"]
+
+        if "keyword" in request.data:
+            keyword = request.data["keyword"]
+        else:
+            msg = "No keyword passed"
+            return Response({"success": False, "data": msg},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
+
         if len(keyword) < 3:
             msg = "Please provide a better description"
             return Response({"success": False, "data": msg},
@@ -349,7 +357,7 @@ class FeedSearch(GenericGET):
         if len(stories) == 0:
             message = "no articles found"
             return Response({"success": True, "message": message},
-                             status=status.HTTP_200_OK)
+                            status=status.HTTP_200_OK)
 
         stories = self.filterDuplicates(stories)
 
