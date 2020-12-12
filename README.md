@@ -1,4 +1,4 @@
-# alrtai APIs
+# news-serve-API
 
 This repository contains all of the APIs which we serve to the end-user using our react.js dashboard. For running this repository, there are two methods. You could run it in development mode and you can run it in production. All you need to do put a new feature or a new API in production can be summarized in small steps.
 
@@ -12,7 +12,7 @@ This repository contains all of the APIs which we serve to the end-user using ou
 ## Installation.
 
 
-1. Clone this repository `git clone https://github.com/alrtai/apis`
+1. Clone this repository `git clone https://github.com/guyandtheworld/news-serve-api`
 2. Setup the Database Keys locally. 
     - Create a folder called `.keys` in the apis folder
     - Create a file called django.env in the `.keys` folder
